@@ -5,6 +5,7 @@ import webapp2
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.spreadsheets.client import SpreadsheetsClient
 from gdata.spreadsheets.data import SpreadsheetsFeed
+import gdata.spreadsheet
 from settings import gdocs_settings
 
 class MainPage(webapp2.RequestHandler):
@@ -38,8 +39,22 @@ class MainPage(webapp2.RequestHandler):
                     desired_class=SpreadsheetsFeed, auth_token=token)
 
       retval = 'Your Spreadsheets:\n'
-      for entry in spreadsheets.entry:
-        retval += entry.title.text + "\n"
+      #for entry in spreadsheets.entry:
+        #retval += "%s\n" % entry.category
+      for i, entry in enumerate(spreadsheets.entry):
+          if isinstance(spreadsheets, gdata.spreadsheet.SpreadsheetsCellsFeed):
+              print '%s %s\n' % (entry.title.text, entry.content.text)
+          elif isinstance(spreadsheets, gdata.spreadsheet.SpreadsheetsListFeed):
+              print '%s %s %s' % (i, entry.title.text, entry.content.text)
+              # Print this row's value for each column (the custom dictionary is
+              # built using the gsx: elements in the entry.)
+              print 'Contents:'
+              for key in entry.custom:  
+                  print '  %s: %s' % (key, entry.custom[key].text)
+              print '\n',
+          else:
+              print '%s %s\n' % (i, entry.title.text)
+
       self.response.headers['Content-Type'] = 'text/plain'
       self.response.write(retval)
 
