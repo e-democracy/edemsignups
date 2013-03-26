@@ -17,10 +17,19 @@ class MainPage(webapp2.RequestHandler):
         self.__docsClient__ = None
         self.__spreadsheetsClient__ = None
     
+    # For now, being lazy and using username/password. The token returned by 
+    # one type of client can be used by other types. In fact, it has to, as
+    # future calls to ClientLogin will result in unusable tokens.
+    #
+    # Eventually, we should use Oauth.
+
     @property
     def docsClient(self):
         if self.__docsClient__ is None:
             self.__docsClient__ = DocsClient()
+            self.__docsClient__.ClientLogin(gdocs_settings['username'], 
+                                gdocs_settings['password'], gdocs_settings['app_name'])
+
         assert self.__docsClient__
         return self.__docsClient__
 
@@ -28,21 +37,10 @@ class MainPage(webapp2.RequestHandler):
     def spreadsheetsClient(self):
         if self.__spreadsheetsClient__ is None:
             self.__spreadsheetsClient__ = SpreadsheetsClient()
+            self.__spreadsheetsClient__.ClientLogin(gdocs_settings['username'], 
+                                gdocs_settings['password'], gdocs_settings['app_name'])
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
-
-    @property
-    def token(self):
-        # For now, being lazy and using username/password. The token returned by 
-        # one type of client can be used by other types. In fact, it has to, as
-        # future calls to ClientLogin will result in unusable tokens.
-        #
-        # Eventually, we should use Oauth.
-        if self.__token__ is None:
-            self.__token__ = self.docsClient.ClientLogin(gdocs_settings['username'], 
-                    gdocs_settings['password'], gdocs_settings['app_name'])
-        assert self.__token__
-        return self.__token__
 
     def spreadsheets(self, folder):
         '''Generates a list of Google Spreadsheets based on the Resource
@@ -52,8 +50,7 @@ class MainPage(webapp2.RequestHandler):
            
            Returned spreadsheets will be Resource instances.'''
         folders = []
-        contents = self.docsClient.GetResources(uri=folder.content.src,
-                    auth_token=self.token)
+        contents = self.docsClient.GetResources(uri=folder.content.src)
         for entry in contents.entry:
             if entry.GetResourceType() == 'folder':
                 folders.append(entry)
@@ -74,17 +71,27 @@ class MainPage(webapp2.RequestHandler):
             title_exact='true',
             show_collections='true')
 
-        folder = self.docsClient.GetResources(q=query, auth_token=self.token).entry[0]
+        folder = self.docsClient.GetResources(q=query).entry[0]
 
         # Now that we have the folder, its time to get the spreadsheets...
-        # Unfortunately, we can't just use the get_spreadsheets method, because 
-        # we need to provide the URI of the specific folder we want to get 
-        # spreadsheets from, and we need to recurse on other folders. A 
-        # get_spreadsheets_from_folder function would be a nice addition.
+        # Unfortunately, we can't just use the get_spreadsheets method of 
+        # SpreadsheetClient, because we need to provide the URI of the specific
+        # folder we want to get spreadsheets from, and we need to recurse on 
+        # folders. A  get_spreadsheets_from_folder function would be a nice 
+        # addition.
         
         retval = 'Your Spreadsheets:\n'
         for spreadsheet in self.spreadsheets(folder):
-            retval += '%s\n' % (spreadsheet.title.text)
+            # Another pain in the butt: as far as I can tell, there is no way 
+            # to convert a Resource into another object. The Spreadsheet class
+            # includes a GetSpreadsheetKey method that does the following. But
+            # since I can't just convert the Resource into a Spreadsheet, I
+            # have to get all goofy reimplement GetSpreadsheetKey
+            spreadsheet_id = spreadsheet.GetId().split('/')[-1]
+            spreadsheet_id = spreadsheet_id.split('spreadsheet%3A')[-1]
+            retval += '%s\n' % spreadsheet.title.text
+            for worksheet in self.spreadsheetsClient.GetWorksheets(spreadsheet_id).entry:
+                retval += '\t%s\n' % worksheet.title.text
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
