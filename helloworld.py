@@ -86,12 +86,18 @@ class MainPage(webapp2.RequestHandler):
             # to convert a Resource into another object. The Spreadsheet class
             # includes a GetSpreadsheetKey method that does the following. But
             # since I can't just convert the Resource into a Spreadsheet, I
-            # have to get all goofy reimplement GetSpreadsheetKey
+            # have to get all goofy and reimplement GetSpreadsheetKey
             spreadsheet_id = spreadsheet.GetId().split('/')[-1]
             spreadsheet_id = spreadsheet_id.split('spreadsheet%3A')[-1]
             retval += '%s\n' % spreadsheet.title.text
             for worksheet in self.spreadsheetsClient.GetWorksheets(spreadsheet_id).entry:
                 retval += '\t%s\n' % worksheet.title.text
+                if worksheet.title.text == 'Raw':
+                    rows = self.spreadsheetsClient.GetListFeed(spreadsheet_id, worksheet.id.text.rsplit('/',1)[1]).entry
+                    for row in rows:
+                        for key in row.to_dict():
+                            retval += '\t\t%s: %s\n' % (key, row.get_value(key))
+
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
