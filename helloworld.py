@@ -75,13 +75,6 @@ class MainPage(webapp2.RequestHandler):
 
         folder = self.docsClient.GetResources(q=query).entry[0]
 
-        # Now that we have the folder, its time to get the spreadsheets...
-        # Unfortunately, we can't just use the get_spreadsheets method of 
-        # SpreadsheetClient, because we need to provide the URI of the specific
-        # folder we want to get spreadsheets from, and we need to recurse on 
-        # folders. A  get_spreadsheets_from_folder function would be a nice 
-        # addition.
-        
         retval = 'Your Spreadsheets:\n'
         for spreadsheet in self.spreadsheets(folder):
             # Another pain in the butt: as far as I can tell, there is no way 
@@ -105,7 +98,7 @@ class MainPage(webapp2.RequestHandler):
                         }
                         retval += '\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s\n' % template_values
                         retval += '\t\t%s\n\n\n\n' % template.render(self.email_path, template_values)
-                        mail.send_mail(gdocs_settings['username'], template_values['email'], 'Welcome to E-Democracy', template.render(self.email_path, template_values))
+                        mail.send_mail(gdocs_settings['email_as'], template_values['email'], 'Welcome to E-Democracy', template.render(self.email_path, template_values))
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
