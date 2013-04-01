@@ -2,10 +2,11 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib'))
 
 import webapp2
+from google.appengine.ext.webapp import template
+from google.appengine.api import mail
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.spreadsheets.client import SpreadsheetsClient
 from gdata.spreadsheets.data import SpreadsheetsFeed
-import gdata.spreadsheet
 from settings import gdocs_settings
 
 class MainPage(webapp2.RequestHandler):
@@ -16,6 +17,7 @@ class MainPage(webapp2.RequestHandler):
         self.__token__ = None
         self.__docsClient__ = None
         self.__spreadsheetsClient__ = None
+        self.email_path = os.path.join(os.path.dirname(__file__), 'email.html')
     
     # For now, being lazy and using username/password. The token returned by 
     # one type of client can be used by other types. In fact, it has to, as
@@ -95,9 +97,15 @@ class MainPage(webapp2.RequestHandler):
                 if worksheet.title.text == 'Raw':
                     rows = self.spreadsheetsClient.GetListFeed(spreadsheet_id, worksheet.id.text.rsplit('/',1)[1]).entry
                     for row in rows:
-                        for key in row.to_dict():
-                            retval += '\t\t%s: %s\n' % (key, row.get_value(key))
-
+                        template_values = {
+                            'firstname': row.get_value('firstname'), 
+                            'lastname': row.get_value('lastname'), 
+                            'fullname': row.get_value('fullname'), 
+                            'email': row.get_value('email') 
+                        }
+                        retval += '\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s\n' % template_values
+                        retval += '\t\t%s\n\n\n\n' % template.render(self.email_path, template_values)
+                        mail.send_mail(gdocs_settings['username'], template_values['email'], 'Welcome to E-Democracy', template.render(self.email_path, template_values))
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
