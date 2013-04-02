@@ -27,7 +27,11 @@ class BounceHandler(BounceNotificationHandler):
 
 
     def receive(self, bounce_notification):
-        logging.info('Received bounce form %s' % bounce_notification.notification_from)
+        bouncing_email = bounce_notification.notification_from
+        logging.info('Received bounce form %s' % bouncing_email)
+        logging.info('\tBouncing Message: %s' bounce_notification.original_raw_message())
+        query = ListQuery(sq="email=%s" % bouncing_email)
+
         
 
 
