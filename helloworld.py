@@ -4,9 +4,9 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
 import webapp2
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-from gdata.docs.client import DocsClient, DocsQuery
-from gdata.spreadsheets.client import SpreadsheetsClient
+from gdata.docs.client import DocsQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed
+from clients import Clients
 from settings import gdocs_settings
 
 class MainPage(webapp2.RequestHandler):
@@ -14,31 +14,16 @@ class MainPage(webapp2.RequestHandler):
     def __init__(self, request, response):
         # webapp2 uses initialize instead of __init__, cause it's special
         self.initialize(request, response)
-        self.__docsClient__ = None
-        self.__spreadsheetsClient__ = None
+        self.__clients__ = None
         self.email_path = os.path.join(os.path.dirname(__file__), 'email.html')
     
-    # For now, being lazy and using username/password.
-    # Eventually, we should use Oauth.
-
     @property
-    def docsClient(self):
-        if self.__docsClient__ is None:
-            self.__docsClient__ = DocsClient()
-            self.__docsClient__.ClientLogin(gdocs_settings['username'], 
-                                gdocs_settings['password'], gdocs_settings['app_name'])
+    def clients(self):
+        if self.__clients__ is None:
+            self.__clients__ = Clients()
 
-        assert self.__docsClient__
-        return self.__docsClient__
-
-    @property
-    def spreadsheetsClient(self):
-        if self.__spreadsheetsClient__ is None:
-            self.__spreadsheetsClient__ = SpreadsheetsClient()
-            self.__spreadsheetsClient__.ClientLogin(gdocs_settings['username'], 
-                                gdocs_settings['password'], gdocs_settings['app_name'])
-        assert self.__spreadsheetsClient__
-        return self.__spreadsheetsClient__
+        assert self.__clients__
+        return self.__clients__
 
     def spreadsheets(self, folder):
         '''Generates a list of Google Spreadsheets based on the Resource
@@ -48,7 +33,7 @@ class MainPage(webapp2.RequestHandler):
            
            Returned spreadsheets will be Resource instances.'''
         folders = []
-        contents = self.docsClient.GetResources(uri=folder.content.src)
+        contents = self.clients.docs.GetResources(uri=folder.content.src)
         for entry in contents.entry:
             if entry.GetResourceType() == 'folder':
                 folders.append(entry)
@@ -69,7 +54,7 @@ class MainPage(webapp2.RequestHandler):
             title_exact='true',
             show_collections='true')
 
-        folder = self.docsClient.GetResources(q=query).entry[0]
+        folder = self.clients.docs.GetResources(q=query).entry[0]
 
         retval = 'Your Spreadsheets:\n'
         for spreadsheet in self.spreadsheets(folder):
@@ -81,10 +66,10 @@ class MainPage(webapp2.RequestHandler):
             spreadsheet_id = spreadsheet.GetId().split('/')[-1]
             spreadsheet_id = spreadsheet_id.split('spreadsheet%3A')[-1]
             retval += '%s\n' % spreadsheet.title.text
-            for worksheet in self.spreadsheetsClient.GetWorksheets(spreadsheet_id).entry:
+            for worksheet in self.clients.spreadsheets.GetWorksheets(spreadsheet_id).entry:
                 retval += '\t%s\n' % worksheet.title.text
                 if worksheet.title.text == 'Raw':
-                    rows = self.spreadsheetsClient.GetListFeed(spreadsheet_id, worksheet.id.text.rsplit('/',1)[1]).entry
+                    rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, worksheet.id.text.rsplit('/',1)[1]).entry
                     for row in rows:
                         template_values = {
                             'firstname': row.get_value('firstname'), 
