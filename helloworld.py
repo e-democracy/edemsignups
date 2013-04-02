@@ -101,6 +101,66 @@ class MainPage(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
 
+from gdata.spreadsheets.client import WorksheetQuery, ListQuery
+from gdata.spreadsheets.data import ListEntry
+from datetime import datetime
+class TestPage(webapp2.RequestHandler):
 
-app = webapp2.WSGIApplication([('/', MainPage)],
+    def __init__(self, request, response):
+        # webapp2 uses initialize instead of __init__, cause it's special
+        self.initialize(request, response)
+        self.__clients__ = None
+    
+    @property
+    def clients(self):
+        if self.__clients__ is None:
+            self.__clients__ = Clients()
+
+        assert self.__clients__
+        return self.__clients__
+
+    def get(self):
+        retval = ''
+        spreadsheet_id = '0AvVUbsCmsj1jdGpPVFhSR0lfZzhhQTJ2VWJ1dnlPMWc' 
+
+        bounced_sheet = self.clients.spreadsheets.GetWorksheets(spreadsheet_id, q=WorksheetQuery(title='Bounced')).entry[0]
+        bounced_sheet_id = bounced_sheet.id.text.rsplit('/',1)[1]
+        logging.debug('%s' % bounced_sheet_id)
+        retval += '%s' % bounced_sheet_id 
+
+        query = ListQuery(sq='email = "%s"' % 'thisAddressDoesNotExistBecauseNoBodyWouldWantSuchALongAndRamblingAddress@gmail.com')
+        rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, 'od6', q=query).entry
+        retval += 'Results:\n'
+        for row in rows:
+            template_values = {
+                'firstname': row.get_value('firstname'),
+                'lastname': row.get_value('lastname'),
+                'fullname': row.get_value('fullname'),
+                'email': row.get_value('email')
+            }
+
+            retval += '\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s\n' % template_values
+
+            # Indicate the bounce was received now
+            bounce_time_str = datetime.now().strftime('%m/%d/%Y %H:%M:%S %Z')
+            logging.debug('\t\tTime: %s\n' % bounce_time_str)
+            retval += '\t\tTime: %s\n' % bounce_time_str
+            row.set_value('bounced', bounce_time_str)
+
+            # Move the record to the Bounced Sheet
+            # Using the same instance of a ListEntry works just fine here. 
+            # In the first, a new row is being created based on the data in the
+            # ListEntry instance. In the second, Delete will refer to the URI
+            # of the ListEntry instance, which refers to the original row.
+            self.clients.spreadsheets.AddListEntry(row, spreadsheet_id, bounced_sheet_id)
+            self.clients.spreadsheets.Delete(row)
+
+        
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.write(retval)
+
+
+
+app = webapp2.WSGIApplication([('/', MainPage),
+                                ('/test', TestPage)],
                               debug=True)

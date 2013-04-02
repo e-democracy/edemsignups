@@ -5,7 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib')
 import webapp2
 from google.appengine.ext.webapp.mail_handlers import BounceNotification,\
                                                     BounceNotificationHandler
-from gdata.spreadsheets.client import ListQuery 
+from gdata.spreadsheets.client import WorksheetQuery, ListQuery 
 from gdata.spreadsheets.data import SpreadsheetsFeed
 from settings import gdocs_settings
 from clients import Clients
@@ -41,8 +41,17 @@ class BounceHandler(BounceNotificationHandler):
             return
         
         ref = q.get()
-        query = ListQuery(sq="email=%s" % bouncing_email)
-        self.clients.spreadsheet.GetListFeed(ref.spreadsheet, ref.worksheet, q=query)
+        query = ListQuery(sq='email = "%s"' % bouncing_email)
+        bounced_sheet = self.clients.spreadsheets.GetWorksheets(ref.spreadsheet, q=WorksheetQuery(title='Bounced')).entry[0]
+        rows = self.clients.spreadsheets.GetListFeed(ref.spreadsheet, ref.worksheet, q=query).entry
+        for row in rows:
+            template_values = {
+                'firstname': row.get_value('firstname'), 
+                'lastname': row.get_value('lastname'), 
+                'fullname': row.get_value('fullname'), 
+                'email': row.get_value('email') 
+            }
+            logging.debug('\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s' % template_values)
 
         
 
