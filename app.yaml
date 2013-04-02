@@ -8,10 +8,11 @@ inbound_services:
 - mail_bounce
 
 handlers:
+- url: /_ah/bounce
+  script: bounce_handler.app
+  login: admin
+
 - url: /.*
   script: helloworld.app
   login: admin
 
-- url: /_ah/bounce
-  script: bouncer_handler.app
-  login: admin
