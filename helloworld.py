@@ -14,15 +14,11 @@ class MainPage(webapp2.RequestHandler):
     def __init__(self, request, response):
         # webapp2 uses initialize instead of __init__, cause it's special
         self.initialize(request, response)
-        self.__token__ = None
         self.__docsClient__ = None
         self.__spreadsheetsClient__ = None
         self.email_path = os.path.join(os.path.dirname(__file__), 'email.html')
     
-    # For now, being lazy and using username/password. The token returned by 
-    # one type of client can be used by other types. In fact, it has to, as
-    # future calls to ClientLogin will result in unusable tokens.
-    #
+    # For now, being lazy and using username/password.
     # Eventually, we should use Oauth.
 
     @property

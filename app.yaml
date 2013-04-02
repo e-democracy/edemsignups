@@ -4,6 +4,14 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
+inbound_services:
+- mail_bounce
+
 handlers:
 - url: /.*
   script: helloworld.app
+  login: admin
+
+- url: /_ah/bounce
+  script: bouncer_handler.app
+  login: admin
