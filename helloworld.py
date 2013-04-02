@@ -123,7 +123,17 @@ class TestPage(webapp2.RequestHandler):
         retval = ''
         spreadsheet_id = '0AvVUbsCmsj1jdGpPVFhSR0lfZzhhQTJ2VWJ1dnlPMWc' 
 
-        bounced_sheet = self.clients.spreadsheets.GetWorksheets(spreadsheet_id, q=WorksheetQuery(title='Bounced')).entry[0]
+        bounced_sheets = self.clients.spreadsheets.GetWorksheets(spreadsheet_id, q=WorksheetQuery(title='Bounced')).entry
+        if len(bounced_sheets) == 0:
+            # Make a Bounced sheet
+            result = self.clients.spreadsheets.AddWorksheet(spreadsheet_id, 'Bounced', 50, 50)
+            # 1.) Get the top row of the Raw sheet
+            # 2.) Insert it into the Worksheet created above
+
+        if len(bounced_sheets) > 1:
+            # This message should include the name of the spreadsheet. It should also be emailed.
+            logging.warning('Multiple Bounce sheets found. Using the first one.')
+        bounced_sheet = bounced_sheets[0]
         bounced_sheet_id = bounced_sheet.id.text.rsplit('/',1)[1]
         logging.debug('%s' % bounced_sheet_id)
         retval += '%s' % bounced_sheet_id 
