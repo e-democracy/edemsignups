@@ -9,6 +9,7 @@ from gdata.docs.client import DocsQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed
 from clients import Clients
 from settings import gdocs_settings
+from models import EmailReference
 
 import logging
 
@@ -71,8 +72,9 @@ class MainPage(webapp2.RequestHandler):
             retval += '%s\n' % spreadsheet.title.text
             for worksheet in self.clients.spreadsheets.GetWorksheets(spreadsheet_id).entry:
                 retval += '\t%s\n' % worksheet.title.text
+                worksheet_id = worksheet.id.text.rsplit('/',1)[1]
                 if worksheet.title.text == 'Raw':
-                    rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, worksheet.id.text.rsplit('/',1)[1]).entry
+                    rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, worksheet_id).entry
                     for row in rows:
                         template_values = {
                             'firstname': row.get_value('firstname'), 
@@ -82,8 +84,19 @@ class MainPage(webapp2.RequestHandler):
                         }
                         retval += '\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s\n' % template_values
                         retval += '\t\t%s\n\n\n\n' % template.render(self.email_path, template_values)
-                        mail.send_mail(gdocs_settings['email_as'], template_values['email'], 'Welcome to E-Democracy', template.render(self.email_path, template_values))
+                        mail.send_mail(gdocs_settings['email_as'], 
+                                        template_values['email'], 
+                                        'Welcome to E-Democracy', 
+                                        template.render(self.email_path, template_values))
+
+                        # Save a reference to the email we just sent for later
+                        ref = EmailReference(address = template_values['email'],
+                                            spreadsheet = spreadsheet_id,
+                                            worksheet = worksheet_id)
+                        ref.put()
+
                         logging.debug('Emailed: %s' % template_values['email'])
+
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
