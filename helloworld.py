@@ -10,6 +10,8 @@ from gdata.spreadsheets.data import SpreadsheetsFeed
 from clients import Clients
 from settings import gdocs_settings
 
+import logging
+
 class MainPage(webapp2.RequestHandler):
 
     def __init__(self, request, response):
@@ -81,6 +83,7 @@ class MainPage(webapp2.RequestHandler):
                         retval += '\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s\n' % template_values
                         retval += '\t\t%s\n\n\n\n' % template.render(self.email_path, template_values)
                         mail.send_mail(gdocs_settings['email_as'], template_values['email'], 'Welcome to E-Democracy', template.render(self.email_path, template_values))
+                        logging.debug('Emailed: %s' % template_values['email'])
 
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
