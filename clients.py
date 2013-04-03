@@ -1,6 +1,7 @@
 # coding=utf-8
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib'))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                'lib'))
 
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.spreadsheets.client import SpreadsheetsClient
@@ -21,7 +22,8 @@ class Clients(object):
         if self.__docsClient__ is None:
             self.__docsClient__ = DocsClient()
             self.__docsClient__.ClientLogin(gdocs_settings['username'],
-                                gdocs_settings['password'], gdocs_settings['app_name'])
+                                gdocs_settings['password'], 
+                                gdocs_settings['app_name'])
 
         assert self.__docsClient__
         return self.__docsClient__
@@ -31,7 +33,8 @@ class Clients(object):
         if self.__spreadsheetsClient__ is None:
             self.__spreadsheetsClient__ = SpreadsheetsClient()
             self.__spreadsheetsClient__.ClientLogin(gdocs_settings['username'],
-                                gdocs_settings['password'], gdocs_settings['app_name'])
+                                gdocs_settings['password'], 
+                                gdocs_settings['app_name'])
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
 

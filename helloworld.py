@@ -1,6 +1,7 @@
 # coding=utf-8
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib'))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                'lib'))
 
 import webapp2
 from google.appengine.ext.webapp import template
@@ -70,11 +71,13 @@ class MainPage(webapp2.RequestHandler):
             spreadsheet_id = spreadsheet.GetId().split('/')[-1]
             spreadsheet_id = spreadsheet_id.split('spreadsheet%3A')[-1]
             retval += '%s\n' % spreadsheet.title.text
-            for worksheet in self.clients.spreadsheets.GetWorksheets(spreadsheet_id).entry:
+            for worksheet in self.clients.spreadsheets.GetWorksheets(
+                                                        spreadsheet_id).entry:
                 retval += '\t%s\n' % worksheet.title.text
                 worksheet_id = worksheet.id.text.rsplit('/',1)[1]
                 if worksheet.title.text == 'Raw':
-                    rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, worksheet_id).entry
+                    rows = self.clients.spreadsheets.GetListFeed(
+                                        spreadsheet_id, worksheet_id).entry
                     for row in rows:
                         template_values = {
                             'firstname': row.get_value('firstname'), 
@@ -82,12 +85,17 @@ class MainPage(webapp2.RequestHandler):
                             'fullname': row.get_value('fullname'), 
                             'email': row.get_value('email') 
                         }
-                        retval += '\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s\n' % template_values
-                        retval += '\t\t%s\n\n\n\n' % template.render(self.email_path, template_values)
+                        retval += '\t\tFirst Name: %(firstname)s, \
+                                    Last Name: %(lastname)s, \
+                                    Full Name %(fullname)s, \
+                                    Email: %(email)s\n' % template_values
+                        retval += '\t\t%s\n\n\n\n' % template.render(
+                                            self.email_path, template_values)
                         mail.send_mail(gdocs_settings['email_as'], 
                                         template_values['email'], 
                                         'Welcome to E-Democracy', 
-                                        template.render(self.email_path, template_values))
+                                        template.render(self.email_path, 
+                                                        template_values))
 
                         # Save a reference to the email we just sent for later
                         ref = EmailReference(address = template_values['email'],
@@ -123,23 +131,29 @@ class TestPage(webapp2.RequestHandler):
         retval = ''
         spreadsheet_id = '0AvVUbsCmsj1jdGpPVFhSR0lfZzhhQTJ2VWJ1dnlPMWc' 
 
-        bounced_sheets = self.clients.spreadsheets.GetWorksheets(spreadsheet_id, q=WorksheetQuery(title='Bounced')).entry
+        bounced_sheets = self.clients.spreadsheets.GetWorksheets(spreadsheet_id,
+                                    q=WorksheetQuery(title='Bounced')).entry
         if len(bounced_sheets) == 0:
             # Make a Bounced sheet
-            result = self.clients.spreadsheets.AddWorksheet(spreadsheet_id, 'Bounced', 50, 50)
+            result = self.clients.spreadsheets.AddWorksheet(spreadsheet_id, 
+                                                            'Bounced', 50, 50)
             # 1.) Get the top row of the Raw sheet
             # 2.) Insert it into the Worksheet created above
 
         if len(bounced_sheets) > 1:
-            # This message should include the name of the spreadsheet. It should also be emailed.
-            logging.warning('Multiple Bounce sheets found. Using the first one.')
+            # This message should include the name of the spreadsheet. It 
+            # should also be emailed.
+            logging.warning('Multiple Bounce sheets found. \
+                            Using the first one.')
         bounced_sheet = bounced_sheets[0]
         bounced_sheet_id = bounced_sheet.id.text.rsplit('/',1)[1]
         logging.debug('%s' % bounced_sheet_id)
         retval += '%s' % bounced_sheet_id 
 
-        query = ListQuery(sq='email = "%s"' % 'thisAddressDoesNotExistBecauseNoBodyWouldWantSuchALongAndRamblingAddress@gmail.com')
-        rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, 'od6', q=query).entry
+        query = ListQuery(sq='email = "%s"' % 
+            'thisAddressDoesNotExistBecauseNoBodyWouldWantSuchALongAndRamblingAddress@gmail.com')
+        rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, 
+                                                        'od6', q=query).entry
         retval += 'Results:\n'
         for row in rows:
             template_values = {
@@ -149,7 +163,10 @@ class TestPage(webapp2.RequestHandler):
                 'email': row.get_value('email')
             }
 
-            retval += '\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s\n' % template_values
+            retval += '\t\tFirst Name: %(firstname)s, \
+                        Last Name: %(lastname)s, \
+                        Full Name %(fullname)s, \
+                        Email: %(email)s\n' % template_values
 
             # Indicate the bounce was received now
             bounce_time_str = datetime.now().strftime('%m/%d/%Y %H:%M:%S %Z')
@@ -162,7 +179,8 @@ class TestPage(webapp2.RequestHandler):
             # In the first, a new row is being created based on the data in the
             # ListEntry instance. In the second, Delete will refer to the URI
             # of the ListEntry instance, which refers to the original row.
-            self.clients.spreadsheets.AddListEntry(row, spreadsheet_id, bounced_sheet_id)
+            self.clients.spreadsheets.AddListEntry(row, spreadsheet_id, 
+                                                        bounced_sheet_id)
             self.clients.spreadsheets.Delete(row)
 
         

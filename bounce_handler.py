@@ -1,6 +1,7 @@
 # coding=utf-8
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lib'))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
+                'lib'))
 
 import webapp2
 from google.appengine.ext.webapp.mail_handlers import BounceNotification,\
@@ -32,18 +33,22 @@ class BounceHandler(BounceNotificationHandler):
         bouncing_email = bounce_notification.original['to']
         logging.debug('Received bounce from %s' % bouncing_email)
 
-        # Retrieve the ID of the Spreadsheet containing this user's record from the Reference
+        # Retrieve the ID of the Spreadsheet containing this user's record from
+        # the Reference
         q = EmailReference.all()
         q.filter("address =", bouncing_email)
         q.order('-created')
         if q.count() == 0:
-            log.error('Received bounce from an address we did not email: %s' % bouncing_email)
+            log.error('Received bounce from an address we did not email: %s' % 
+                        bouncing_email)
             return
         
         ref = q.get()
         query = ListQuery(sq='email = "%s"' % bouncing_email)
-        bounced_sheet = self.clients.spreadsheets.GetWorksheets(ref.spreadsheet, q=WorksheetQuery(title='Bounced')).entry[0]
-        rows = self.clients.spreadsheets.GetListFeed(ref.spreadsheet, ref.worksheet, q=query).entry
+        bounced_sheet = self.clients.spreadsheets.GetWorksheets(
+                ref.spreadsheet, q=WorksheetQuery(title='Bounced')).entry[0]
+        rows = self.clients.spreadsheets.GetListFeed(ref.spreadsheet, 
+                ref.worksheet, q=query).entry
         for row in rows:
             template_values = {
                 'firstname': row.get_value('firstname'), 
@@ -51,7 +56,9 @@ class BounceHandler(BounceNotificationHandler):
                 'fullname': row.get_value('fullname'), 
                 'email': row.get_value('email') 
             }
-            logging.debug('\t\tFirst Name: %(firstname)s, Last Name: %(lastname)s, Full Name %(fullname)s, Email: %(email)s' % template_values)
+            logging.debug('\t\tFirst Name: %(firstname)s, \
+                            Last Name: %(lastname)s, Full Name %(fullname)s, \
+                            Email: %(email)s' % template_values)
 
         
 
