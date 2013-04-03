@@ -109,8 +109,9 @@ class MainPage(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
 
-from gdata.spreadsheets.client import WorksheetQuery, ListQuery
-from gdata.spreadsheets.data import ListEntry
+from gdata.spreadsheets.client import WorksheetQuery, ListQuery, CellQuery
+from gdata.spreadsheets.data import ListEntry, WorksheetEntry,\
+                                    BuildBatchCellsUpdate
 from datetime import datetime
 class TestPage(webapp2.RequestHandler):
 
@@ -127,18 +128,43 @@ class TestPage(webapp2.RequestHandler):
         assert self.__clients__
         return self.__clients__
 
+    def createBouncedSheet(self, spreadsheet_id, raw_sheet_id):
+        # 1.) Get the top row of the Raw sheet
+        cells = self.clients.spreadsheets.GetCells(spreadsheet_id, 
+                raw_sheet_id, q=CellQuery(1, 1)).entry
+                    
+        # 2.) Make a new worksheet with 1 extra column (and an arbitrary
+        # number of rows)
+        result = self.clients.spreadsheets.AddWorksheet(spreadsheet_id, 
+                                            'Bounced', 50, len(cells)+1)
+        bounced_sheet_id = result.id.text.rsplit('/',1)[1]
+        bounced_cells_update = BuildBatchCellsUpdate(spreadsheet_id,
+                                    bounced_sheet_id)
+        # 3.) Insert the header cells of the Raw sheet into the Bounced
+        # sheet, plus a Bounced header 
+        for i, cell in enumerate(cells):
+            logging.info('Adding %s' % cell.content.text)
+            bounced_cells_update.AddSetCell(1, i+1, cell.content.text)
+
+        bounced_cells_update.AddSetCell(1, i+2, 'Bounced')
+        self.clients.spreadsheets.batch(bounced_cells_update, force=True)
+
+        return result
+
     def get(self):
         retval = ''
         spreadsheet_id = '0AvVUbsCmsj1jdGpPVFhSR0lfZzhhQTJ2VWJ1dnlPMWc' 
+        raw_sheet_id = 'od6'
 
         bounced_sheets = self.clients.spreadsheets.GetWorksheets(spreadsheet_id,
                                     q=WorksheetQuery(title='Bounced')).entry
         if len(bounced_sheets) == 0:
-            # Make a Bounced sheet
-            result = self.clients.spreadsheets.AddWorksheet(spreadsheet_id, 
-                                                            'Bounced', 50, 50)
-            # 1.) Get the top row of the Raw sheet
-            # 2.) Insert it into the Worksheet created above
+            # Make a Bounced sheet and add it to the bounced_sheets list
+            bounced_sheets = [self.createBouncedSheet(spreadsheet_id,
+                                raw_sheet_id)]
+            
+            # TODO Insert the name of the spreadsheet
+            logging.info('Created Bounced sheet in spreadsheet.')
 
         if len(bounced_sheets) > 1:
             # This message should include the name of the spreadsheet. It 
@@ -153,7 +179,7 @@ class TestPage(webapp2.RequestHandler):
         query = ListQuery(sq='email = "%s"' % 
             'thisAddressDoesNotExistBecauseNoBodyWouldWantSuchALongAndRamblingAddress@gmail.com')
         rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, 
-                                                        'od6', q=query).entry
+                                                raw_sheet_id, q=query).entry
         retval += 'Results:\n'
         for row in rows:
             template_values = {

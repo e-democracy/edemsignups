@@ -9,7 +9,10 @@ automate parts of the outreach sign up process.
 
 The [Google Spreadsheets API](https://developers.google.com/google-apps/spreadsheets/) 
 provides access to read and write to the cells, rows, and sheets in a Google 
-Spreadsheet. Thereis also a [Python library build on this API](http://code.google.com/p/gdata-python-client/).
+Spreadsheet. There is also a [Python library build on this API](http://code.google.com/p/gdata-python-client/).
+
+The [live_cleint_test](https://code.google.com/p/gdata-python-client/source/browse/tests/gdata_tests/spreadsheets/live_client_test.py)
+is a wonderful reference for how to do things with the Spreadsheets API.
 
 ### App Engine Bounce Handlers ###
 
