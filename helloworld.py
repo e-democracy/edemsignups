@@ -153,13 +153,13 @@ class TestPage(webapp2.RequestHandler):
 
     def get(self):
         retval = ''
+        bouncing_email = 'thisAddressDoesNotExistBecauseNoBodyWouldWantSuchALongAndRamblingAddress@gmail.com' 
         spreadsheet_id = '0AvVUbsCmsj1jdGpPVFhSR0lfZzhhQTJ2VWJ1dnlPMWc' 
         raw_sheet_id = 'od6'
 
         bounced_sheets = self.clients.spreadsheets.GetWorksheets(spreadsheet_id,
                                     q=WorksheetQuery(title='Bounced')).entry
         if len(bounced_sheets) == 0:
-            # Make a Bounced sheet and add it to the bounced_sheets list
             bounced_sheets = [self.createBouncedSheet(spreadsheet_id,
                                 raw_sheet_id)]
             
@@ -171,13 +171,13 @@ class TestPage(webapp2.RequestHandler):
             # should also be emailed.
             logging.warning('Multiple Bounce sheets found. \
                             Using the first one.')
+
         bounced_sheet = bounced_sheets[0]
         bounced_sheet_id = bounced_sheet.id.text.rsplit('/',1)[1]
         logging.debug('%s' % bounced_sheet_id)
         retval += '%s' % bounced_sheet_id 
 
-        query = ListQuery(sq='email = "%s"' % 
-            'thisAddressDoesNotExistBecauseNoBodyWouldWantSuchALongAndRamblingAddress@gmail.com')
+        query = ListQuery(sq='email = "%s"' % bouncing_email)
         rows = self.clients.spreadsheets.GetListFeed(spreadsheet_id, 
                                                 raw_sheet_id, q=query).entry
         retval += 'Results:\n'
