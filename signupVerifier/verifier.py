@@ -1,5 +1,8 @@
 # coding=utf-8
 
+from google.appengine.ext.webapp import template
+from google.appengine.api import mail
+
 from gdata.spreadsheets.data import Spreadsheet, Worksheet, ListsFeed
 from gdata.spreadsheets.client import WorksheetQuery
 
@@ -35,6 +38,8 @@ class SignupVerifier(object):
 
     def __init__():
         self.__clients__ = None
+        self.email_path = os.path.join(os.path.dirname(__file__), 
+                            gdocs_settings['template_fn'])
 
     @property
     def clients(self):
@@ -97,15 +102,36 @@ class SignupVerifier(object):
             for spreadsheet in self.spreadsheets(folder):
                 yield spreadsheet
 
-    def sendVerificationEmails(self, listsfeed):
+    def sendVerificationEmails(self, listsfeed, spreadsheet_id, worksheet_id):
         """
-           Given a ListsFeed, sends an email to the email address associated
-           with each row in the feed to verify that the email address exists,
-           and to give the address the opportunity to opt-out. 
+           Given a ListsFeed and the associated spreadsheet_id and 
+           worksheet_id, sends an email to the email address associated with 
+           each row in the feed to verify that the email address exists, and to
+           give the address the opportunity to opt-out. 
         """
 
         if not isinstance(listsfeed, ListsFeed):
             raise TypeError('Must provide a GData ListsFeed.')
+
+        rows = listsfeed.entry
+        for row in rows:
+            template_values = {
+                'firstname': row.get_value('firstname'), 
+                'lastname': row.get_value('lastname'), 
+                'fullname': row.get_value('fullname'), 
+                'email': row.get_value('email')
+            }
+
+            mail.send_mail(gdocs_settings['email_as'],
+                            template_values['email'],
+                            gdocs_settings['verification_subject'],
+                            template.render(self.email_path))
+
+            # Save a reference to the email we just sent for later
+            ref = EmailReference(address = template_values['email'],
+                                spreadsheet = spreadsheet_id,
+                                worksheet = worksheet_id)
+            ref.put()
 
     def verifySignups(self):
         """
