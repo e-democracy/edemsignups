@@ -12,7 +12,8 @@ provides access to read and write to the cells, rows, and sheets in a Google
 Spreadsheet. There is also a [Python library build on this API](http://code.google.com/p/gdata-python-client/).
 
 The [live_cleint_test](https://code.google.com/p/gdata-python-client/source/browse/tests/gdata_tests/spreadsheets/live_client_test.py)
-is a wonderful reference for how to do things with the Spreadsheets API.
+is a wonderful reference for how to do things with the Spreadsheets API. The [PyDoc generated documentation](http://gdata-python-client.googlecode.com/hg/pydocs/gdata.html) 
+is also very useful.
 
 ### App Engine Bounce Handlers ###
 
