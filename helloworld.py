@@ -14,6 +14,21 @@ from models import EmailReference
 
 import logging
 
+# Scanning Script
+#   1.) Get list of all spreadsheets in folder
+#   2.) Discard from list all spreadsheets already in Spreadsheet table
+#   3.) For all remaining spreadsheets, create entries in Spreadsheet table
+#       1.) If remaining spreadsheet meta sheet contains prev_gsid, add
+#           Spreadsheet Change, and use meta dat fro previous spreadsheet.
+#   4.) For all remaining spreadsheets, for each row in Persons sheet
+#       1.) Read in Row
+#       2.) Add info to Person table
+#       3.) If spreadsheet with prev_gsid, add entry to Person Change
+#   5.) For each Person with source_gsid == current
+#       1.) Generate/Save Opt-Out Token
+#       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
+#       3.) Send Email
+
 class MainPage(webapp2.RequestHandler):
 
     def __init__(self, request, response):
@@ -113,6 +128,8 @@ from gdata.spreadsheets.client import WorksheetQuery, ListQuery, CellQuery
 from gdata.spreadsheets.data import ListEntry, WorksheetEntry,\
                                     BuildBatchCellsUpdate
 from datetime import datetime
+
+
 class TestPage(webapp2.RequestHandler):
 
     def __init__(self, request, response):
@@ -214,6 +231,43 @@ class TestPage(webapp2.RequestHandler):
         self.response.write(retval)
 
 
+# Opt-Out Page
+#   1.) User Visits Opt-out Page
+#   2.) Script checks for Out-Out Token
+#   3a.) If Exists
+#       1.) Ask user for Reason
+#       2.) Enter Opt-Out
+#       3.) Remove Opt-Out Token
+#   3b.) Else
+#       1.) Display Error
+
+# Opt-Out Email Handler
+#   Assumes all replies are out-outs
+#   1.) Receives a reply
+#   2.) Retreive Person associated with email address and spreadsheet of
+#       previous 2 days
+#   3.) Add entry in Out-Out
+#   4.) Remove associated Opt-Out Token
+
+# Follow Up Script
+#   1.) Delete all Opt-Out Tokens
+#   2.) Get all Spreadsheet from 2 days prior
+#   3.) Get all Opt-Out from previous 2 days
+#   4.) Get all Bounce from previous 2 days
+#   5.) For each Spreadsheet w/out-out
+#       1.) Create New Spreadsheet
+#       2.) Enter prev_gsid in MetaSheet
+#       3.) Enter Row in Persons sheet for each Opt-Out + Reason & Occurred
+#   6.) For each Spreadsheet with Bounce
+#       1.) Create New Spreadsheet
+#       2.) Ente prev_gsid in Meta sheet
+#       3.) Enter Row in Persons sheet for each Bounce + Occurred
+#   7.) For each staff with a downloadable spreadsheet, email download links w/
+#       directions
+#   8.) For each Spreadsheet
+#       1.) Make a CSV
+#       2.) Add all Person without Bounce or Opt-Out
+#       3.) Email Uploader 
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                 ('/test', TestPage)],

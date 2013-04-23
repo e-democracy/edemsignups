@@ -14,6 +14,11 @@ from models import EmailReference
 
 import logging
 
+# Bounce Handler
+#   1.) Finds Person from Spreadsheets scanned within previous two days based 
+#       on bouncing email   
+#   2.) Add record to Bounce
+
 class BounceHandler(BounceNotificationHandler):
 
     def __init__(self, request, response):
