@@ -6,11 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
 import webapp2
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-from gdata.docs.client import DocsQuery
-from gdata.spreadsheets.data import SpreadsheetsFeed
-from clients import Clients
-from settings import gdocs_settings
-from models import EmailReference
+from signupVerifier.gclients import GClients
 
 import logging
 
@@ -34,36 +30,16 @@ class MainPage(webapp2.RequestHandler):
     def __init__(self, request, response):
         # webapp2 uses initialize instead of __init__, cause it's special
         self.initialize(request, response)
-        self.__clients__ = None
+        self.__verifier__ = None
         self.email_path = os.path.join(os.path.dirname(__file__), 'email.html')
     
     @property
-    def clients(self):
-        if self.__clients__ is None:
-            self.__clients__ = Clients()
+    def verifier(self):
+        if self.__verifier__ is None:
+            self.__verifier__ = SignupVerifier
 
-        assert self.__clients__
-        return self.__clients__
-
-    def spreadsheets(self, folder):
-        '''Generates a list of Google Spreadsheets based on the Resource
-           instance provided, which is assumed to be a folder. If the provided
-           folder contains other folders, they will be recursively searched for
-           spreadsheets and other folders, breadth first.
-           
-           Returned spreadsheets will be Resource instances.'''
-        folders = []
-        contents = self.clients.docs.GetResources(uri=folder.content.src)
-        for entry in contents.entry:
-            if entry.GetResourceType() == 'folder':
-                folders.append(entry)
-            elif entry.GetResourceType() == 'spreadsheet':
-                yield entry
-
-        for folder in folders:
-            for spreadsheet in self.spreadsheets(folder):
-                yield spreadsheet
-
+        assert self.__verifier__
+        return self.__verifier__
 
     def get(self):
         # This is a bit confusing, because the Spreadsheets Client does not 

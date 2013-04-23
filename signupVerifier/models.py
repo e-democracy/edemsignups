@@ -2,18 +2,18 @@
 
 from google.appengine.ext import db
 
-# Spreadsheet
-#   gsid
+# Batch 
+#   bid
 #   staff_name
 #   staff_email
 #   event_name
 #   event_date
 #   event_location
-#   scanned - datetime
+#   created - datetime
 
-# Spreadsheet Change
-#   gsid
-#   prev_gsid
+# Batch Change
+#   bid
+#   prev_bid
 
 # Person
 #   pid
@@ -23,6 +23,10 @@ from google.appengine.ext import db
 # Person Change
 #   pid
 #   prev_pid
+
+# Batch Spreadsheet
+#   gsid
+#   bid
 
 # Opt-Out Token
 #   token
