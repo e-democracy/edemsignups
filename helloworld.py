@@ -11,16 +11,19 @@ from signupVerifier.gclients import GClients
 import logging
 
 # Scanning Script
-#   1.) Get list of all spreadsheets in folder
-#   2.) Discard from list all spreadsheets already in Spreadsheet table
-#   3.) For all remaining spreadsheets, create entries in Spreadsheet table
+#   1.) Get list of all spreadsheets in folder (here)
+#   2.) Discard from list all spreadsheets already in Spreadsheet table (here)
+#   3.) For all remaining spreadsheets, create entries in Batch and Spreadsheet 
+#            table (InitialProcessor & here)
 #       1.) If remaining spreadsheet meta sheet contains prev_gsid, add
-#           Spreadsheet Change, and use meta dat fro previous spreadsheet.
+#           Batch Change, and use meta data from previous Batch
+#           (InitialProcessor & here).
 #   4.) For all remaining spreadsheets, for each row in Persons sheet
+#           (InitialProcessor)
 #       1.) Read in Row
 #       2.) Add info to Person table
 #       3.) If spreadsheet with prev_gsid, add entry to Person Change
-#   5.) For each Person with source_gsid == current
+#   5.) For each Person with source_bid == current (InitialProcessor)
 #       1.) Generate/Save Opt-Out Token
 #       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
 #       3.) Send Email
