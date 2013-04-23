@@ -79,18 +79,6 @@ class InitialProcessor(object):
         """
         pass
 
-
-    def createOptOutToken(person):
-        """
-        Generates an opt-out token for the provided person, saves that token
-        to the database, and returns that token.
-        
-        Input: person - a Person model
-        Output: the opt-out token string generated for the Person
-        Side Effect: The opt-out token string is saved to the databse
-        """
-        pass
-
     def sendVerificationEmails(batch):
         """ 
         Generates an email based on the metadata of the provided batch, each 

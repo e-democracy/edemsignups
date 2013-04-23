@@ -28,13 +28,15 @@ import logging
 #       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
 #       3.) Send Email
 
-class MainPage(webapp2.RequestHandler):
+class SpreadsheetInitialPage(webapp2.RequestHandler):
+    """
+    Drive Initial Processing with Spreadsheets as the primary I/O.
+    """
 
     def __init__(self, request, response):
         # webapp2 uses initialize instead of __init__, cause it's special
         self.initialize(request, response)
         self.__verifier__ = None
-        self.email_path = os.path.join(os.path.dirname(__file__), 'email.html')
     
     @property
     def verifier(self):
@@ -211,28 +213,28 @@ class TestPage(webapp2.RequestHandler):
 
 
 # Opt-Out Page
-#   1.) User Visits Opt-out Page
-#   2.) Script checks for Out-Out Token
+#   1.) User Visits Opt-out Page (here)
+#   2.) Script checks for Out-Out Token (OptOutProcessor)
 #   3a.) If Exists
-#       1.) Ask user for Reason
-#       2.) Enter Opt-Out
-#       3.) Remove Opt-Out Token
+#       1.) Ask user for Reason (here)
+#       2.) Enter Opt-Out (OptOutProcessor)
+#       3.) Remove Opt-Out Token (OptOutProcessor)
 #   3b.) Else
-#       1.) Display Error
+#       1.) Display Error (here)
 
 # Opt-Out Email Handler
 #   Assumes all replies are out-outs
-#   1.) Receives a reply
+#   1.) Receives a reply (here)
 #   2.) Retreive Person associated with email address and spreadsheet of
-#       previous 2 days
-#   3.) Add entry in Out-Out
-#   4.) Remove associated Opt-Out Token
+#       previous 2 days (here)
+#   3.) Add entry in OptOut (OptOutProcessor)
+#   4.) Remove associated Opt-Out Token (OptOutProcessor)
 
 # Follow Up Script
-#   1.) Delete all Opt-Out Tokens
+#   1.) Delete all Opt-Out Tokens (OptOutProcessor)
 #   2.) Get all Spreadsheet from 2 days prior
-#   3.) Get all Opt-Out from previous 2 days
-#   4.) Get all Bounce from previous 2 days
+#   3.) Get all Opt-Out from previous 2 days (here and OptOutProcessor)
+#   4.) Get all Bounces from previous 2 days
 #   5.) For each Spreadsheet w/out-out
 #       1.) Create New Spreadsheet
 #       2.) Enter prev_gsid in MetaSheet
