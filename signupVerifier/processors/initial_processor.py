@@ -1,4 +1,6 @@
 # coding=utf-8
+from ..models import Batch, BatchChange, Person, PersonChange
+from ..models.utils import clone_entity
 
 def importBatch(batch):
     """
@@ -6,13 +8,24 @@ def importBatch(batch):
     Batch model.
     
     Input: batch - a dict representing the batch to save to the database.
+                   Allowable attributes of the dict are: 
+                        'staff_name': string,
+                        'staff_email': string, 
+                        'event_name': string, 
+                        'event_date': date, 
+                        'event_location': string
     Output: a Batch model created by the import.
     Side Effect: an entry is saved to the database for the batch.
-    Throws:
     """
-    pass
+    if not isinstance(batch, dict):
+        raise TypeError('Expected dict')
 
-def addBatchChange(batch, prev_bid):
+    batch_record = Batch(batch)
+    batch_record.put()
+
+    return batch_record
+
+def addBatchChange(batch, prev_batch):
     """
     Imports a change to a previously existing Batch, and returns the
     created Batch model. Values associated with the previous Batch will be
@@ -20,15 +33,36 @@ def addBatchChange(batch, prev_bid):
     dict.
 
     Input:  batch - a dict representing the batch to save to the database.
-            prev_bid - the ID of the previous instance of the provided
-                        batch.
+            prev_batch - either the ID or Batch instance of the previous 
+                        instance of the provided batch
     Output: a Batch model created by the addition of the new batch.
     Side Effect: an entry is saved to the database for the batch, and an
                  association between the new batch and its previous 
                  instance is saved.
     """
-    pass
+    if not isinstance(batch dict):
+        raise TypeError('Expected batch to be dict')
+    if not (isinstance(prev_batch, basestring) or \
+                isinstance(prev_batch, Batch)):
+        raise TypeError('prev_batch must be either string or Batch')
 
+    if isinstance(prev_batch, basestring):
+        q = Batch.all()
+        q.filter('__key__ =', prev_batch)
+        prev_batch = q.get()
+
+    if not (prev_batch and isinstance(prev_batch, Batch)):
+        raise LookupError('provided prev_batch could not be found')
+
+    cur_batch = clone_entity(prev_batch, True, True, batch)
+    cur_batch.put()
+
+    change_record = BatchChange(cur_batch = cur_batch,
+                                prev_batch = prev_batch)
+    change_record.put()
+
+    return cur_batch
+    
 
 def importPerson(person, bid):
     """
