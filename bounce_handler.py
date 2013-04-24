@@ -15,9 +15,9 @@ from models import EmailReference
 import logging
 
 # Bounce Handler
-#   1.) Finds Person from Spreadsheets scanned within previous two days based 
-#       on bouncing email   
-#   2.) Add record to Bounce
+#   1.) Finds Person from Batch scanned within previous two days based 
+#       on bouncing email (here)
+#   2.) Add record to Bounce (BounceProcessor)
 
 class BounceHandler(BounceNotificationHandler):
 
