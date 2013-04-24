@@ -1,9 +1,11 @@
 # coding=utf-8
 from gdata.docs.client import DocsClient, DocsQuery
+from gdata.docs.data import Resource
 from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
-					ListsFeed
-from settings import gdocs_settings
+					ListsFeed, ListRow
+from ..settings import settings
+from ..models import Batch
 
 def spreadsheet_id(spreadsheet):
     """
@@ -29,7 +31,7 @@ def worksheet_id(worksheet):
     assert wid
     return wid
 
-class GClients(object):
+class GClient(object):
     def __init__(self):
         self.__docsClient__ = None
         self.__spreadsheetsClient__ = None
@@ -58,33 +60,77 @@ class GClients(object):
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
 
-    def createBouncedSheet(self, spreadsheet_id, raw_sheet_id):
+    def dictToRow(self, d):
         """
-            Creates a new worksheet via the Google Spreadsheets API dedicated 
-            to displaying bouncing email addresses. The new worksheet will be
-            titled 'Bounced'. It will be added to the spreadsheet associated
-            with spreadsheet_id, and its header row will be based on the header
-            row of the worksheet associated with raw_sheet_id.
-        """
-        # 1.) Get the top row of the Raw sheet
-        cells = self.spreadsheetsClient.GetCells(spreadsheet_id, 
-                raw_sheet_id, q=CellQuery(1, 1)).entry
-                    
-        # 2.) Make a new worksheet with 1 extra column (and an arbitrary
-        # number of rows)
-        result = self.spreadsheetsClient.AddWorksheet(spreadsheet_id, 
-                                            'Bounced', 50, len(cells)+1)
-        bounced_sheet_id = result.id.text.rsplit('/',1)[1]
-        bounced_cells_update = BuildBatchCellsUpdate(spreadsheet_id,
-                                    bounced_sheet_id)
-        # 3.) Insert the header cells of the Raw sheet into the Bounced
-        # sheet, plus a Bounced header 
-        for i, cell in enumerate(cells):
-            logging.info('Adding %s' % cell.content.text)
-            bounced_cells_update.AddSetCell(1, i+1, cell.content.text)
+            Converts a dict to a spreadsheet ListRow. The dict's keys will be
+            used as the attribute names of the ListRow.
 
-        bounced_cells_update.AddSetCell(1, i+2, 'Bounced')
-        self.spreadsheetsClient.batch(bounced_cells_update, force=True)
+            Input: d - a dict
+            Output: A ListRow instance containing the data of d
+        """
+        row = ListRow()
+        for key, value in d:
+            row.SetValue(key, value)
+
+        return row
+
+
+    def cloneRawSheet(self, new_spreadsheet_id, orig_spreadsheet_id, 
+                        headers_to_add):
+        """
+            Creates a new worksheet via the Google Spreadsheets API for people 
+            who were not successfully signed up. Its header row will be based 
+            on the header row of the worksheet associated with
+            orig_raw_sheet_id, plus headers_to_add.
+
+            
+            Input:  new_spreadsheet_id - Google Drive ID of the new spreadsheet
+                    orig_spreadsheet_id - Drive ID of the original spreadsheet
+                    headers_to_add - A list of strings, representing headers
+                                     that are to be added to the new 
+                                    spreadsheet's Raw sheet, in addition to 
+                                    headers from the original spreadsheet's Raw
+                                    sheet.
+            Output: A Worksheet instance associated with the newly created Raw
+                    worksheet on Drive.
+            Side Effects: A new worksheet, with its header row populated, will
+                          be created in the spreadsheet identified by 
+                          new_spreadsheet_id, on Drive.
+        """
+        # 1.) Get the header row of the original spreadsheet's Raw sheet
+        orig_raw_sheets = self.spreadsheetsClient.GetWorksheets(
+                            orig_spreadsheet_id,
+                            q=WorksheetQuery(
+                                title=settings['raw_sheet_title']
+                            )
+                          ).entry
+        if len(orig_raw_sheets) != 1:
+            raise IndexError('Spreadsheet %s should have exactly 1 %s sheet' \
+                                % (orig_spreadsheet_id, 
+                                    settings['raw_sheet_title'])
+                            )
+        orig_raw_sheet = orig_raw_sheets[0]
+        orig_raw_sheet_id = worksheet_id(orig_raw_sheet)
+        orig_headers = self.spreadsheetsClient.GetCells(orig_spreadsheet_id, 
+                        orig_raw_sheet_id, q=CellQuery(1, 1)).entry
+                    
+        # 2.) Make a new worksheet with extra columns for the additional
+        # headers (and an arbitrary number of rows)
+        result = self.spreadsheetsClient.AddWorksheet(new_spreadsheet_id, 
+                                settings['raw_sheet_title'], 50, 
+                                len(orig_headers)+len(headers_to_add))
+        new_raw_sheet_id = worksheet_id(result)
+        new_raw_headers_update = BuildBatchCellsUpdate(new_spreadsheet_id,
+                                    new_raw_sheet_id)
+
+        # 3.) Insert the header cells of the original spreadsheet's Raw sheet 
+        # into the Raw sheet of the new spreadsheet, plus additional headers 
+        for i, cell in enumerate(orig_headers):
+            new_raw_headers_update.AddSetCell(1, i+1, cell.content.text)
+
+        for j, cell in enumerate(headers_to_add):
+            new_raw_headers_update.AddSetCell(1, i+j, cell)
+        self.spreadsheetsClient.batch(new_raw_headers_update, force=True)
 
         return result
 
@@ -95,18 +141,78 @@ class GClients(object):
         instance.
 
         The created Spreadsheet will have a meta sheet with just one attribute
-        (id of the provided Batch). It will also have a people sheet that
+        (id of the provided Batch). It will also have a Raw sheet that
         contains the data from Batch of all people who bounced, plus a Person
-        ID number and a time at which the bounce was detected.
+        ID number, a time at which the bounce was detected, and the bounce
+        message.
 
         Input:  batch - a Batch instance to create a bounced spreadsheet for.
         Output: A Spreadsheet instance that allows access to the created Google
                 Spreadsheet.
         Side Effect: A new spreadsheet will be created on Google Drive, in a
             folder specified by the failed_spreadsheets_folder attribute of 
-            this GClients instance.
+            settings.
         """
-        pass
+        if not isinstance(batch, Batch):
+            raise TypeError('batch must be a Batch instance')
+
+        # Get original spreadsheet
+        ogsid = batch.spreadsheets.get.gsid
+        original_spreadsheet = self.docsClient.GetResourceById(ogsid)
+
+        # Get Failed Signups folder
+        failed_signups_folder = self.docsClient.GetResouceById(
+                                        settings['failed_signups_folder_id'])
+
+        # Create a new Spreadsheet in Failed Signups folder
+        new_spreadsheet_title = original_spreadsheet.title.text + " - Bounced"
+        new_spreadsheet = Resource(type="spreadsheet",
+                                    title=new_spreadsheet_title)
+        new_spreadsheet = self.docsClient.CreateResource(new_spreadsheet,
+                                        collection=failed_signups_folder)
+        ngsid = spreadsheet_id(new_spreadsheet)
+
+        # Create and populate the Meta sheet
+        result = self.spreadsheetsClient.AddWorksheet(spreadsheet_id, 
+                                settings['raw_sheet_title'], 50, 1)
+        header_cell = self.spreadsheetsClient.GetCell(ngsid, 1, 1)
+        header_cell.cell.input_value = 'prev_batch'
+        result = self.spreadsheetsClient.update(header_cell)
+        prev_batch_cell = self.spreadsheetsClient.GetCell(ngsid, 2, 1)
+        prev_batch_cell.cell.input_value = batch.key()
+        result = self.spreadsheetsClient.update(prev_batch_cell)
+
+        # Create the cloned Raw sheet 
+        headers_to_add = ['Bounce Time', 'Bounce Message', 'Person ID']
+        new_raw_sheet = self.cloneRawSheet(ngsid, ogsid, headers_to_add)
+        nbsid = workdsheet_id(new_raw_sheet)
+
+        # Get the Bounces for this batch and populate the cloned Raw sheet
+        for bounce in batch.bounces:
+            bounce_row = bounce.person.asDict()
+
+            # Adjust some keys, add additional key/values
+            bounce_row['bounce_time'] = bounce.occurred
+            bounce_row['bounce_message'] = bounce.message
+            bounce_row['person_id'] = bounce.person.key()
+            bounce_row['person_where?'] = bounce_row['born_where']
+            del bounce_row['born_where']
+            bounce_row['parents_where?'] = bounce_row['parents_born_where']
+            del bounce_row['parents_born_where']
+            bounce_row['#_in_house'] = bounce_row['num_in_house']
+            del bounce_row['num_in_house']
+            for i,forum in enumerate(bounce.person.forums):
+                bounce_row[i] = forum
+            del bounce_row['forums']
+            del bounce_row['source_batch']
+
+            bounce_row = self.dictToRow(bounce_dict)
+            self.spreadsheetsClient.AddListEntry(bounce_row, ngsid, nbsid)
+        
+
+
+
+
 
     def createOptOutSpreadsheet(self, batch):
         """
@@ -123,7 +229,7 @@ class GClients(object):
                 Spreadsheet.
         Side Effect: A new spreadsheet will be created on Google Drive, in a
             folder specified by the failed_spreadsheets_folder attribute of 
-            this GClients instance.
+            settings.
         """
         pass
 

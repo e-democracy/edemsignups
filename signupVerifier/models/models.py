@@ -41,9 +41,17 @@ class Person(db.Model):
     parents_born_where = db.StringProperty()
     gender = db.StringProperty()
     num_in_house = db.IntegerProperty()
-    yearly_income = db.IntegerProperty()
+    yrly_income = db.IntegerProperty()
     source_batch = db.ReferenceProperty(Batch, collection_name = 'persons', 
                                         required = True)
+
+    def asDict(self):
+        """ Returns the instance of Person as a dict"""
+        person_dict = {}
+        for prop in db.Model.properties(Person):
+            person_dict[prop] = getattr(self, prop)
+
+        return person_dict
 
 class PersonChange(db.Model):
     """ Represents an evolution of person"""
@@ -53,7 +61,8 @@ class PersonChange(db.Model):
 class BatchSpreadsheet(db.Model):
     """ Indicates connections between Google Spreadsheets and Batches """
     gsid = db.StringProperty(required = True)
-    batch = db.ReferenceProperty(Batch, required = True)
+    batch = db.ReferenceProperty(Batch, required = True,
+                                collection_name="spreadsheets")
 
 class OptOutToken(db.Model):
     """ The tokens used to associate an opt-out request with a person and 
@@ -65,12 +74,15 @@ class OptOutToken(db.Model):
 class OptOut(db.Model):
     """ Record of a person opting out"""
     person = db.ReferenceProperty(Person, required = True)
-    batch = db.ReferenceProperty(Batch, required = True)
+    batch = db.ReferenceProperty(Batch, required = True, 
+                                    collection_name='OptOuts')
     reason = db.Text()
     occurred = db.DateTimeProperty()
 
 class Bounce(db.Model):
     """ Record of a bounce"""
     person = db.ReferenceProperty(Person, required = True)
+    batch = db.ReferenceProperty(Batch, required = True, 
+                                 collection_name='Bounces')
     message = db.Text()
     occurred = db.DateTimeProperty()
