@@ -1,8 +1,4 @@
 # coding=utf-8
-import sys, os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
-                'lib'))
-
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
@@ -91,6 +87,45 @@ class GClients(object):
         self.spreadsheetsClient.batch(bounced_cells_update, force=True)
 
         return result
+
+    def createBouncedSpreadsheet(self, batch):
+        """
+        Creates a new Google Spreadsheet to store the rows from the provided
+        Batch instance that caused a bounce, and returns a Spreadsheet
+        instance.
+
+        The created Spreadsheet will have a meta sheet with just one attribute
+        (id of the provided Batch). It will also have a people sheet that
+        contains the data from Batch of all people who bounced, plus a Person
+        ID number and a time at which the bounce was detected.
+
+        Input:  batch - a Batch instance to create a bounced spreadsheet for.
+        Output: A Spreadsheet instance that allows access to the created Google
+                Spreadsheet.
+        Side Effect: A new spreadsheet will be created on Google Drive, in a
+            folder specified by the failed_spreadsheets_folder attribute of 
+            this GClients instance.
+        """
+        pass
+
+    def createOptOutSpreadsheet(self, batch):
+        """
+        Creates a new Google Spreadsheet to store the rows from the provided
+        Batch instance that opted out, and returns a Spreadsheet instance.
+
+        The created Spreadsheet will have a meta sheet with just one attribute
+        (id of the provided Batch). It will also have a people sheet that
+        contains the data from Batch of all people who opted out, plus a Person
+        ID number and a reason given for opting out.
+
+        Input:  batch - a Batch instance to create an opt-out spreadsheet for.
+        Output: A Spreadsheet instance that allows access to the created Google
+                Spreadsheet.
+        Side Effect: A new spreadsheet will be created on Google Drive, in a
+            folder specified by the failed_spreadsheets_folder attribute of 
+            this GClients instance.
+        """
+        pass
 
     def spreadsheets(self, folder, query=None):
         """
