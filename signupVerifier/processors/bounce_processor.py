@@ -15,3 +15,13 @@ class BounceProcessor(object):
         """
         pass
 
+    def getBounces(since=None):
+        """
+        Retrieves a list of all Bounces that have occurred. If since is 
+        specified, will only retrieve Bounces since the specified datetime.
+
+        Input:  since - optional datetime indicating that only Bounces newer
+                than since should be retrieved.
+        Output: a list of Bounce instances
+        """
+        pass

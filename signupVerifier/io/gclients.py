@@ -92,19 +92,26 @@ class GClients(object):
 
         return result
 
-    def spreadsheets(self, folder):
+    def spreadsheets(self, folder, query=None):
         """
-            Generates a list of Google Spreadsheets based on the Resource
-            instance provided, which is assumed to be a folder. If the provided
-            folder contains other folders, they will be ecursively searched for
-            spreadsheets and other folders, breadth first.
-            
-            Returned spreadsheets will be Resource instances.
+        Generates a list of Google Spreadsheets based on the Resource
+        instance provided, which is assumed to be a folder. If the provided
+        folder contains other folders, they will be recursively searched 
+        for spreadsheets and other folders, breadth first.
+        
+        Returned spreadsheets will be Resource instances.
+
+        Input:  folder - a Resource instance representing a folder to be
+                         search on Drive.
+                query - a Query instance that is used to search for
+                        spreadsheets with specific attributes.
+        Output: a list of Resource instances that represent spreadsheets
+                contained in the provided folder or its subfolders.
         """
         
         folders  = []
 
-        contents = self.docsClient.GetResources(uri=folder.content.src)
+        contents = self.docsClient.GetResources(uri=folder.content.src, q=query)
         for entry in contents.entry:
             if entry.GetResourceType() == 'folder':
                 folders.append(entry)

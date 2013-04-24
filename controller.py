@@ -232,23 +232,24 @@ class TestPage(webapp2.RequestHandler):
 
 # Follow Up Script
 #   1.) Delete all Opt-Out Tokens (OptOutProcessor)
-#   2.) Get all Spreadsheet from 2 days prior
+#   2.) Get all Spreadsheet from 2 days prior (GClients)
 #   3.) Get all Opt-Out from previous 2 days (here and OptOutProcessor)
-#   4.) Get all Bounces from previous 2 days
-#   5.) For each Spreadsheet w/out-out
-#       1.) Create New Spreadsheet
-#       2.) Enter prev_gsid in MetaSheet
+#   4.) Get all Bounces from previous 2 days (here and BounceProcessor)
+#   5.) For each Batch w/out-out (GClients)
+#       1.) Create New Spreadsheet (GClients)
+#       2.) Enter prev_bid in MetaSheet (GClients)
 #       3.) Enter Row in Persons sheet for each Opt-Out + Reason & Occurred
-#   6.) For each Spreadsheet with Bounce
-#       1.) Create New Spreadsheet
-#       2.) Ente prev_gsid in Meta sheet
-#       3.) Enter Row in Persons sheet for each Bounce + Occurred
+#           (GClients)
+#   6.) For each Batch with Bounce (GClients)
+#       1.) Create New Spreadsheet (GClients)
+#       2.) Ente prev_bid in Meta sheet (GClients)
+#       3.) Enter Row in Persons sheet for each Bounce + Occurred (GClients)
 #   7.) For each staff with a downloadable spreadsheet, email download links w/
-#       directions
-#   8.) For each Spreadsheet
-#       1.) Make a CSV
-#       2.) Add all Person without Bounce or Opt-Out
-#       3.) Email Uploader 
+#       directions (FinalProcessor)
+#   8.) For each Batch
+#       1.) Make a CSV (FinalProcessor)
+#       2.) Add all Person without Bounce or Opt-Out (FinalProcessor)
+#   9.) Email Uploader (FinalProcessor)
 
 app = webapp2.WSGIApplication([('/', MainPage),
                                 ('/test', TestPage)],
