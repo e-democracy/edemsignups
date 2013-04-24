@@ -40,7 +40,7 @@ def addBatchChange(batch, prev_batch):
                  association between the new batch and its previous 
                  instance is saved.
     """
-    if not isinstance(batch dict):
+    if not isinstance(batch, dict):
         raise TypeError('Expected batch to be dict')
     if not (isinstance(prev_batch, basestring) or \
                 isinstance(prev_batch, Batch)):
@@ -64,21 +64,39 @@ def addBatchChange(batch, prev_batch):
     return cur_batch
     
 
-def importPerson(person, bid):
+def importPerson(person, batch):
     """
     Imports the provided single person, associated with the indicated
     batch, into the databse, and returns the created Person model.
 
     Input:  person - a dict representing the person to save to the
-                     database.
-            bid - the ID of the Batch model that this person is associated
-                  with.
+                     database. See Person in models for list of attributes.
+            batch - the ID or instance of the Batch model that this person is 
+                    associated with.
     Output: a Person model craeted by the import.
     Side Effect: an entry is saved to the database for the person.
     """
-    pass
+    if not isinstance(person, dict):
+        raise TypeError('Expected person to be dict')
+    if not (isinstance(batch, basestring) or \
+                isinstance(batch, Batch)):
+        raise TypeError('batch must be either string or Batch')
 
-def addPersonChange(person, prev_pid):
+    if isinstance(batch, basestring):
+        q = Batch.all()
+        q.filter('__key__ =', batch)
+        batch = q.get()
+
+    if not (batch and isinstance(batch, Batch)):
+        raise LookupError('provided batch could not be found')
+
+    person_record = Person(person)
+    person_record.source_batch = batch
+    person_record.put()
+
+    return person_record
+
+def addPersonChange(person, prev_person):
     """
     Imports a change to a previously existing Person, and returns the
     created Person model. Values of the previous instance of the Person 
@@ -86,30 +104,63 @@ def addPersonChange(person, prev_pid):
     specified in the person dict.
 
     Input:  person - a dict representing the person to save to the database.
-            prev_pid - the ID of the previous instance of the provided
-                        person.
+            prev_person - the ID or Person instance of the previous instance of 
+                          the provided person.
     Output: a Person model created by the addition of the new person.
     Side Effect: an entry is saved to the database for the person, and an
                  association between the new person and its previous 
                  instance is saved.
     """
-    pass
+    if not isinstance(person, dict):
+        raise TypeError('Expected person to be dict')
+    if not (isinstance(prev_person, basestring) or \
+                isinstance(prev_person, Person)):
+        raise TypeError('prev_person must be either string or Person')
 
-def importPersons(persons, bid):
+    if isinstance(prev_person, basestring):
+        q = Person.all()
+        q.filter('__key__ =', prev_person)
+        prev_person = q.get()
+
+    if not (prev_person and isinstance(prev_person, Person)):
+        raise LookupError('provided prev_person could not be found')
+
+    cur_person = clone_entity(prev_person, True, True, person)
+    cur_person.put()
+
+    change_record = PersonChange(cur_person = cur_person,
+                                 prev_person = prev_person)
+    change_record.put()
+
+    return cur_person
+
+def importPersons(persons, batch):
     """
     Imports the provided persons, associated with the indicated batch, into
     the database, and returns a list of Person models.
     
     Input:  persons - a List of dicts representing persons to save to the
                         database.
-            bid - the ID of the Batch model that these persons are to be
-            associated with.
+            batch - the ID or instance of the Batch model that these persons 
+                    are to be associated with.
     Output: a List of Person models created by the import.
     Side Effect: Entries are saved to the database for each person
                     contained in the persons list.
-    Throws:
     """
-    pass
+    if not (isinstance(batch, basestring) or \
+                isinstance(batch, Batch)):
+        raise TypeError('batch must be either string or Batch')
+
+    if isinstance(batch, basestring):
+        q = Batch.all()
+        q.filter('__key__ =', batch)
+        batch = q.get()
+
+    if not (batch and isinstance(batch, Batch)):
+        raise LookupError('provided batch could not be found')
+
+    person_records = [importPerson(person, batch) for person in persons]
+    return person_records   
 
 def sendVerificationEmails(batch):
     """ 
