@@ -42,7 +42,8 @@ class Person(db.Model):
     gender = db.StringProperty()
     num_in_house = db.IntegerProperty()
     yearly_income = db.IntegerProperty()
-    source_batch = db.ReferenceProperty(Batch, required = True)
+    source_batch = db.ReferenceProperty(Batch, collection_name = 'persons', 
+                                        required = True)
 
 class PersonChange(db.Model):
     """ Represents an evolution of person"""

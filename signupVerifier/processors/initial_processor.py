@@ -1,6 +1,13 @@
 # coding=utf-8
+from google.appengine.ext.webapp import template
+from google.app.engine.api import mail
+
+from ..settings import settings
 from ..models import Batch, BatchChange, Person, PersonChange
 from ..models.utils import clone_entity
+
+
+verification_email_template_path = 'verification_email.html'
 
 def importBatch(batch):
     """
@@ -174,4 +181,20 @@ def sendVerificationEmails(batch):
     Side Effect: Emails are sent to all Person associated with the Batch
                     model.
     """
-    pass
+    if not isinstance(batch):
+        raise TypeError('batch must be a Batch instance')
+
+    for person in batch.persons.get():
+        template_values = {
+            'first_name': person.first_name,
+            'last_name': person.last_name,
+            'full_name': person.full_name,
+            'email': person.email
+        }
+
+        mail.send_mail(settings['email_as'],
+                        template_values['email'],
+                        settings['verification_subject'],
+                        template.render(verification_email_template_path))
+
+    return True
