@@ -60,7 +60,7 @@ class GClient(object):
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
 
-    def dictToRow(self, d):
+    def personDictToRow(self, d):
         """
             Converts a dict to a spreadsheet ListRow. The dict's keys will be
             used as the attribute names of the ListRow.
@@ -68,11 +68,54 @@ class GClient(object):
             Input: d - a dict
             Output: A ListRow instance containing the data of d
         """
+        # Clean/rearrange some keys
+        d['person_where?'] = d['born_where']
+        del d['born_where']
+        d['parents_where?'] = d['parents_born_where']
+        del d['parents_born_where']
+        d['#_in_house'] = d['num_in_house']
+        del d['num_in_house']
+        for i,forum in enumerate(d['forums']):
+            d[i] = forum
+        del d['forums']
+        if hasattr(d, 'source_batch']:
+            del d['source_batch']
+        
+        # Create the ListRow
         row = ListRow()
         for key, value in d:
             row.SetValue(key, value)
 
         return row
+
+    def personRowToDict(self, r):
+        """
+            Converts a spreadsheet ListRow to a dict. The ListRow's attributes
+            will be used as the dict's keys.
+
+            Input: r - a ListRow
+            Output: A dict containing the data of r
+        """
+        d = dict()
+        forum_keys = []
+        for attribute in r.GetAttributes():
+            attribute = attribute.text
+            d[attribute] = r.GetValue(attribute)
+            if attribute.isdigit():
+                forum_keys.append(attribute)
+
+        # Convert some keys
+        d['born_where'] = d['person_where?']
+        del d['person_where?']
+        d['parents_born_where'] = d['parents_where?']
+        del d['parents_where?']
+        d['num_in_house'] = d['#_in_house']
+        del d['#_in_house']
+        d['forums'] = []
+        for i in forum_keys.sorted():
+            d['forums'].append(d[i])
+            del d[i]
+
 
 
     def cloneRawSheet(self, new_spreadsheet_id, orig_spreadsheet_id, 
@@ -134,6 +177,59 @@ class GClient(object):
 
         return result
 
+    def cloneSpreadsheetForFailure(self, ogsid, batch_id, 
+                                    suffix = None, headers_to_add):
+        """
+        Creates a new Google Spreadsheet that is a clone of the
+        structure/metadata of the spreadsheet used as input for the provided
+        batch. The cloned spreadsheet is intended to be used by this system to
+        output information on signups that failed. Returns a reference to the 
+        resulting Spreadsheet and the Raw sheet as a tuple.
+
+        Input:  ogsid - Original Google Spreadsheet ID; id of the spreadsheet
+                        we are going to clone.
+                batch_id - ID/key of the batch that these spreadsheets are
+                            associated with.
+                suffix - a string to be appended to the name of the original
+                        spreadsheet to form the name of the new spreadsheet.
+                headers_to_add - a list of headers to add to the Raw sheet in
+                                 the cloned spreadsheet
+        Output: a tuple that contains a Spreadsheet instance refering to the
+                newly created spreadsheet and a Worksheet instance referring to
+                the Raw sheet of the newly created spreadsheet.
+        """
+        
+        # Get original spreadsheet
+        original_spreadsheet = self.docsClient.GetResourceById(ogsid)
+
+        # Get Failed Signups folder
+        failed_signups_folder = self.docsClient.GetResouceById(
+                                        settings['failed_signups_folder_id'])
+
+        # Create a new Spreadsheet in Failed Signups folder
+        new_spreadsheet_title = original_spreadsheet.title.text + suffix
+        new_spreadsheet = Resource(type="spreadsheet",
+                                    title=new_spreadsheet_title)
+        new_spreadsheet = self.docsClient.CreateResource(new_spreadsheet,
+                                        collection=failed_signups_folder)
+        ngsid = spreadsheet_id(new_spreadsheet)
+
+        # Create and populate the Meta sheet
+        result = self.spreadsheetsClient.AddWorksheet(spreadsheet_id, 
+                                settings['raw_sheet_title'], 50, 1)
+        header_cell = self.spreadsheetsClient.GetCell(ngsid, 1, 1)
+        header_cell.cell.input_value = 'prev_batch'
+        result = self.spreadsheetsClient.update(header_cell)
+        prev_batch_cell = self.spreadsheetsClient.GetCell(ngsid, 2, 1)
+        prev_batch_cell.cell.input_value = batch_id
+        result = self.spreadsheetsClient.update(prev_batch_cell)
+
+        # Create the cloned Raw sheet 
+        new_raw_sheet = self.cloneRawSheet(ngsid, ogsid, headers_to_add)
+        nbsid = workdsheet_id(new_raw_sheet)
+
+        return (new_spreadsheet, new_raw_sheet)
+
     def createBouncedSpreadsheet(self, batch):
         """
         Creates a new Google Spreadsheet to store the rows from the provided
@@ -155,62 +251,35 @@ class GClient(object):
         """
         if not isinstance(batch, Batch):
             raise TypeError('batch must be a Batch instance')
+        if not hasattr(batch, 'spreadsheets') or \
+                len(batch.spreadsheets.get()) == 0:
+            raise LookupError('Provided batch does not have a Google
+                                Spreadsheet associated with it.')
 
-        # Get original spreadsheet
         ogsid = batch.spreadsheets.get.gsid
-        original_spreadsheet = self.docsClient.GetResourceById(ogsid)
+        batch_id = batch.key()
 
-        # Get Failed Signups folder
-        failed_signups_folder = self.docsClient.GetResouceById(
-                                        settings['failed_signups_folder_id'])
-
-        # Create a new Spreadsheet in Failed Signups folder
-        new_spreadsheet_title = original_spreadsheet.title.text + " - Bounced"
-        new_spreadsheet = Resource(type="spreadsheet",
-                                    title=new_spreadsheet_title)
-        new_spreadsheet = self.docsClient.CreateResource(new_spreadsheet,
-                                        collection=failed_signups_folder)
-        ngsid = spreadsheet_id(new_spreadsheet)
-
-        # Create and populate the Meta sheet
-        result = self.spreadsheetsClient.AddWorksheet(spreadsheet_id, 
-                                settings['raw_sheet_title'], 50, 1)
-        header_cell = self.spreadsheetsClient.GetCell(ngsid, 1, 1)
-        header_cell.cell.input_value = 'prev_batch'
-        result = self.spreadsheetsClient.update(header_cell)
-        prev_batch_cell = self.spreadsheetsClient.GetCell(ngsid, 2, 1)
-        prev_batch_cell.cell.input_value = batch.key()
-        result = self.spreadsheetsClient.update(prev_batch_cell)
-
-        # Create the cloned Raw sheet 
+        
         headers_to_add = ['Bounce Time', 'Bounce Message', 'Person ID']
-        new_raw_sheet = self.cloneRawSheet(ngsid, ogsid, headers_to_add)
-        nbsid = workdsheet_id(new_raw_sheet)
+        (new_spreadsheet, new_raw_sheet) = cloneSpreadsheetForFailure(ogsid, 
+                                                batch_id, " - Bounced", 
+                                                headers_to_add)
+        ngsid = spreadsheet_id(new_spreadsheet)
+        nbsid = worksheet_id(new_raw_sheet)
 
         # Get the Bounces for this batch and populate the cloned Raw sheet
+        #TODO see about making this a batch operation
         for bounce in batch.bounces:
-            bounce_row = bounce.person.asDict()
+            bounce_dict = bounce.person.asDict()
 
             # Adjust some keys, add additional key/values
-            bounce_row['bounce_time'] = bounce.occurred
-            bounce_row['bounce_message'] = bounce.message
-            bounce_row['person_id'] = bounce.person.key()
-            bounce_row['person_where?'] = bounce_row['born_where']
-            del bounce_row['born_where']
-            bounce_row['parents_where?'] = bounce_row['parents_born_where']
-            del bounce_row['parents_born_where']
-            bounce_row['#_in_house'] = bounce_row['num_in_house']
-            del bounce_row['num_in_house']
-            for i,forum in enumerate(bounce.person.forums):
-                bounce_row[i] = forum
-            del bounce_row['forums']
-            del bounce_row['source_batch']
+            bounce_dict['bounce_time'] = bounce.occurred
+            bounce_dict['bounce_message'] = bounce.message
+            bounce_dict['person_id'] = bounce.person.key()
+            
 
-            bounce_row = self.dictToRow(bounce_dict)
+            bounce_row = self.personDictToRow(bounce_dict)
             self.spreadsheetsClient.AddListEntry(bounce_row, ngsid, nbsid)
-        
-
-
 
 
 
@@ -231,7 +300,37 @@ class GClient(object):
             folder specified by the failed_spreadsheets_folder attribute of 
             settings.
         """
-        pass
+        if not isinstance(batch, Batch):
+            raise TypeError('batch must be a Batch instance')
+        if not hasattr(batch, 'spreadsheets') or \
+                len(batch.spreadsheets.get()) == 0:
+            raise LookupError('Provided batch does not have a Google
+                                Spreadsheet associated with it.')
+
+        ogsid = batch.spreadsheets.get.gsid
+        batch_id = batch.key()
+        
+        headers_to_add = ['OptOut Time', 'OptOut Message', 'Person ID']
+        (new_spreadsheet, new_raw_sheet) = cloneSpreadsheetForFailure(ogsid, 
+                                                batch_id, " - OptOuts", 
+                                                headers_to_add)
+        ngsid = spreadsheet_id(new_spreadsheet)
+        nbsid = worksheet_id(new_raw_sheet)
+
+        # Get the Optouts for this batch and populate the cloned Raw sheet
+        #TODO see about making this a batch operation
+        for optout in batch.optouts:
+            optout_dict = optout.person.asDict()
+
+            # Adjust some keys, add additional key/values
+            optout_dict['optout_time'] = optout.occurred
+            optout_dict['optout_message'] = optout.message
+            optout_dict['person_id'] = optout.person.key()
+            
+
+            optout_row = self.personDictToRow(optout_dict)
+            self.spreadsheetsClient.AddListEntry(optout_row, ngsid, nbsid)
+
 
     def spreadsheets(self, folder, query=None):
         """

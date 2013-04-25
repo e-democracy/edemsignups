@@ -11,8 +11,9 @@ from signupVerifier.gclients import GClients
 import logging
 
 # Scanning Script
-#   1.) Get list of all spreadsheets in folder (here)
-#   2.) Discard from list all spreadsheets already in Spreadsheet table (here)
+#   1.) Get list of all spreadsheets in folder (GClient)
+#   2.) Discard from list all spreadsheets already in Spreadsheet table
+#       (InitialProcessor)
 #   3.) For all remaining spreadsheets, create entries in Batch and Spreadsheet 
 #            table (InitialProcessor & here)
 #       1.) If remaining spreadsheet meta sheet contains prev_gsid, add
