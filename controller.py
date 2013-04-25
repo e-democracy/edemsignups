@@ -13,21 +13,24 @@ import logging
 # Scanning Script
 #   1.) Get list of all spreadsheets in folder (GClient)
 #   2.) Discard from list all spreadsheets already in Spreadsheet table
-#       (InitialProcessor)
-#   3.) For all remaining spreadsheets, create entries in Batch and Spreadsheet 
+#       (GSClient)
+#   3.) For all remaining spreadsheets, 
+#       1.) Convert spreadsheets to batch_dict and person_dict (GClient)
+#       2.) Import dicts into Batch and Person tables (InitialProcessor)  
 #            table (InitialProcessor & here)
-#       1.) If remaining spreadsheet meta sheet contains prev_gsid, add
-#           Batch Change, and use meta data from previous Batch
-#           (InitialProcessor & here).
+#           1.) If remaining spreadsheet meta sheet contains prev_gsid, add
+#               Batch Change, and use meta data from previous Batch
+#               (InitialProcessor & here).
 #   4.) For all remaining spreadsheets, for each row in Persons sheet
 #           (InitialProcessor)
 #       1.) Read in Row
 #       2.) Add info to Person table
 #       3.) If spreadsheet with prev_gsid, add entry to Person Change
-#   5.) For each Person with source_bid == current (InitialProcessor)
-#       1.) Generate/Save Opt-Out Token
+#   5.) For each Person with source_bid == current 
+#       1.) Generate/Save Opt-Out Token (OptOutProcessor)
 #       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
-#       3.) Send Email
+#           (InitialProcessor)
+#       3.) Send Email (Initial Processor)
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
     """

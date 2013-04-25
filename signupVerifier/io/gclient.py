@@ -88,6 +88,32 @@ class GClient(object):
 
         return row
 
+    def rowToDict(self, r):
+        """
+            A general ListRow -> dict converter. Does not make any changes to
+            keys or data.
+        """
+        if not isinstance(r, ListRow):
+            raise TypeError('Row to Dict conversion requires a ListRow')
+
+        d = dict()
+        forum_keys = []
+        for attribute in r.GetAttributes():
+            attribute = attribute.text
+            d[attribute] = r.GetValue(attribute)
+            if attribute.isdigit():
+                forum_keys.append(attribute)
+
+    def metaRowToDict(self, r):
+        """
+            Converts a row from a spreadsheet's Meta sheet into a dict.
+
+            Input: r - a ListRow
+            Output: A dict containing the data of r
+        """
+        d = self.rowToDict(r)
+        return d
+
     def personRowToDict(self, r):
         """
             Converts a spreadsheet ListRow to a dict. The ListRow's attributes
@@ -96,13 +122,7 @@ class GClient(object):
             Input: r - a ListRow
             Output: A dict containing the data of r
         """
-        d = dict()
-        forum_keys = []
-        for attribute in r.GetAttributes():
-            attribute = attribute.text
-            d[attribute] = r.GetValue(attribute)
-            if attribute.isdigit():
-                forum_keys.append(attribute)
+        d = self.rowToDict(r)
 
         # Convert some keys
         d['born_where'] = d['person_where?']
@@ -362,3 +382,20 @@ class GClient(object):
             for spreadsheet in self.spreadsheets(folder):
                 yield spreadsheet
 
+    def filterOutOldSpreadsheets(self, spreadsheets):
+        """
+        Returns a list of spreadsheets from the provided list that are not
+        already in the database.
+
+        Input:  spreadsheets - list of Spreadsheet instances
+        Output: a list of the difference between the input list and the list of
+                spreadsheets already in the database.
+        """
+        q = BatchSpreadsheet.all()
+
+        existing_spreadsheet_ids = [bs.gsid for bs in q.get()]
+
+        new_spreadsheets = [spreadsheet for spreadsheet in spreadsheets if
+                spreadsheet_id(spreadsheet) not in existing_spreadsheet_ids]
+
+        return new_spreadsheets
