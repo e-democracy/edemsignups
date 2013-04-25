@@ -3,7 +3,7 @@ from gdata.docs.client import DocsClient, DocsQuery
 from gdata.docs.data import Resource
 from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
-					ListsFeed, ListRow
+					ListsFeed, ListEntry
 from ..settings import settings
 from ..models import Batch, BatchSpreadsheet
 
@@ -90,25 +90,19 @@ class GClient(object):
 
     def rowToDict(self, r):
         """
-            A general ListRow -> dict converter. Does not make any changes to
+            A general ListEntry -> dict converter. Does not make any changes to
             keys or data.
         """
-        if not isinstance(r, ListRow):
+        if not isinstance(r, ListEntry):
             raise TypeError('Row to Dict conversion requires a ListRow')
 
-        d = dict()
-        forum_keys = []
-        for attribute in r.GetAttributes():
-            attribute = attribute.text
-            d[attribute] = r.GetValue(attribute)
-            if attribute.isdigit():
-                forum_keys.append(attribute)
+        d = r.to_dict()
 
     def metaRowToDict(self, r):
         """
             Converts a row from a spreadsheet's Meta sheet into a dict.
 
-            Input: r - a ListRow
+            Input: r - a ListEntry
             Output: A dict containing the data of r
         """
         d = self.rowToDict(r)
@@ -116,8 +110,8 @@ class GClient(object):
 
     def personRowToDict(self, r):
         """
-            Converts a spreadsheet ListRow to a dict. The ListRow's attributes
-            will be used as the dict's keys.
+            Converts a spreadsheet ListEntry to a dict. The ListEntry's 
+            attributes will be used as the dict's keys.
 
             Input: r - a ListRow
             Output: A dict containing the data of r
@@ -125,13 +119,14 @@ class GClient(object):
         d = self.rowToDict(r)
 
         # Convert some keys
-        d['born_where'] = d['person_where?']
-        del d['person_where?']
-        d['parents_born_where'] = d['parents_where?']
-        del d['parents_where?']
-        d['num_in_house'] = d['#_in_house']
-        del d['#_in_house']
+        d['bornwhere'] = d['personwhere?']
+        del d['personwhere?']
+        d['parentsbornwhere'] = d['parentswhere?']
+        del d['parentswhere?']
+        d['numinhouse'] = d['#inhouse']
+        del d['#inhouse']
         d['forums'] = []
+        forum_keys = [key for key in d.keys() if key.isdigit()]
         for i in forum_keys.sorted():
             d['forums'].append(d[i])
             del d[i]
