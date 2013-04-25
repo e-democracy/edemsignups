@@ -5,14 +5,14 @@ from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
 					ListsFeed, ListRow
 from ..settings import settings
-from ..models import Batch
+from ..models import Batch, BatchSpreadsheet
 
 def spreadsheet_id(spreadsheet):
     """
         Returns the true ID of the GData Spreadsheet.
     """
-    if not isinstance(spreadsheet, Spreadsheet):
-        raise TypeError("Must provide a GData Spreadsheet.")
+    if not isinstance(spreadsheet, Resource):
+        raise TypeError("Must provide a GData Resource that is a spreadsheet.")
 
     sid = spreadsheet.GetId().split('/')[-1]
     sid = sid.split('spreadsheet%3A')[-1]
@@ -24,8 +24,8 @@ def worksheet_id(worksheet):
         Returns the true ID of the GData Worksheet
     """
 
-    if not isinstance(worksheet, Worksheet):
-        raise TypeError("Must provide a GData Worksheet.")
+    #if not isinstance(worksheet, Worksheet):
+    #    raise TypeError("Must provide a GData Worksheet.")
 
     wid = worksheet.id.text.rsplit('/',1)[1]
     assert wid
@@ -43,9 +43,9 @@ class GClient(object):
     def docsClient(self):
         if self.__docsClient__ is None:
             self.__docsClient__ = DocsClient()
-            self.__docsClient__.ClientLogin(gdocs_settings['username'],
-                                gdocs_settings['password'], 
-                                gdocs_settings['app_name'])
+            self.__docsClient__.ClientLogin(settings['username'],
+                                settings['password'], 
+                                settings['app_name'])
 
         assert self.__docsClient__
         return self.__docsClient__
@@ -54,9 +54,9 @@ class GClient(object):
     def spreadsheetsClient(self):
         if self.__spreadsheetsClient__ is None:
             self.__spreadsheetsClient__ = SpreadsheetsClient()
-            self.__spreadsheetsClient__.ClientLogin(gdocs_settings['username'],
-                                gdocs_settings['password'], 
-                                gdocs_settings['app_name'])
+            self.__spreadsheetsClient__.ClientLogin(settings['username'],
+                                settings['password'], 
+                                settings['app_name'])
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
 
@@ -136,7 +136,35 @@ class GClient(object):
             d['forums'].append(d[i])
             del d[i]
 
+    def getMetaListFeed(self, spreadsheet):
+        """
+            Finds and retrieves the ListFeed for the Meta sheet in the provided
+            Spreadsheet.
 
+            Input: spreadsheet - a Resource instance of a spreadsheet with a
+                                 Meta sheet.
+            Output: A ListFeed of the Meta sheet
+        """
+        if not isinstance(spreadsheet, Resource) and \
+                        spreadsheet.GetResourceType() != 'spreadsheet':
+            raise TypeError('a Resource instance of type spreadsheet required')
+
+        sid = spreadsheet_id(spreadsheet)
+        q = WorksheetQuery(title = settings['meta_sheet_title'])
+        meta_sheets = self.spreadsheetsClient.GetWorksheets(sid, q=q).entry
+
+        if len(meta_sheets) == 0:
+            raise LookupError('Provided spreadsheet does not have a %s sheet' % 
+                                settings['meta_sheet_title'])
+        
+        meta_sheet_id = worksheet_id(meta_sheets[0])
+        return self.spreadsheetsClient.GetListFeed(sid, meta_sheet_id).entry
+
+
+    def getRawListFeed(self, spreadsheet):
+        """
+
+        """
 
     def cloneRawSheet(self, new_spreadsheet_id, orig_spreadsheet_id, 
                         headers_to_add):
@@ -368,7 +396,10 @@ class GClient(object):
         Output: a list of Resource instances that represent spreadsheets
                 contained in the provided folder or its subfolders.
         """
-        
+        if not isinstance(folder, Resource) and \
+                        folder.GetResourceType() != 'folder':
+            raise TypeError('a Resource instance of type folder required')
+
         folders  = []
 
         contents = self.docsClient.GetResources(uri=folder.content.src, q=query)
@@ -392,10 +423,16 @@ class GClient(object):
                 spreadsheets already in the database.
         """
         q = BatchSpreadsheet.all()
+        all_batch_spreadsheets = q.run()
 
-        existing_spreadsheet_ids = [bs.gsid for bs in q.get()]
+        if all_batch_spreadsheets:
+            existing_spreadsheet_ids = [bs.gsid for bs in
+                                                    all_batch_spreadsheets]
 
-        new_spreadsheets = [spreadsheet for spreadsheet in spreadsheets if
+            new_spreadsheets = [spreadsheet for spreadsheet in spreadsheets if
                 spreadsheet_id(spreadsheet) not in existing_spreadsheet_ids]
+
+        else:
+            new_spreadsheets = spreadsheets
 
         return new_spreadsheets

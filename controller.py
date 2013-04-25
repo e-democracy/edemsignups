@@ -1,36 +1,12 @@
 # coding=utf-8
-import sys, os
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), 
-                'lib'))
 
 import webapp2
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-from signupVerifier.gclients import GClients
+from signupVerifier.gclient import GClient
 
 import logging
 
-# Scanning Script
-#   1.) Get list of all spreadsheets in folder (GClient)
-#   2.) Discard from list all spreadsheets already in Spreadsheet table
-#       (GSClient)
-#   3.) For all remaining spreadsheets, 
-#       1.) Convert spreadsheets to batch_dict and person_dict (GClient)
-#       2.) Import dicts into Batch and Person tables (InitialProcessor)  
-#            table (InitialProcessor & here)
-#           1.) If remaining spreadsheet meta sheet contains prev_gsid, add
-#               Batch Change, and use meta data from previous Batch
-#               (InitialProcessor & here).
-#   4.) For all remaining spreadsheets, for each row in Persons sheet
-#           (InitialProcessor)
-#       1.) Read in Row
-#       2.) Add info to Person table
-#       3.) If spreadsheet with prev_gsid, add entry to Person Change
-#   5.) For each Person with source_bid == current 
-#       1.) Generate/Save Opt-Out Token (OptOutProcessor)
-#       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
-#           (InitialProcessor)
-#       3.) Send Email (Initial Processor)
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
     """
@@ -40,17 +16,42 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
     def __init__(self, request, response):
         # webapp2 uses initialize instead of __init__, cause it's special
         self.initialize(request, response)
-        self.__verifier__ = None
+        self.__gclient__ = None
     
     @property
-    def verifier(self):
-        if self.__verifier__ is None:
-            self.__verifier__ = SignupVerifier
+    def gclient(self):
+        if self.__gclient__ is None:
+            self.__gclient__ = GClient()
 
-        assert self.__verifier__
-        return self.__verifier__
+        assert self.__gclient__
+        return self.__gclient__
 
     def get(self):
+        #   1.) Get list of all spreadsheets in folder (GClient)
+        signups_folder = self.gclient.docsClient.GetResourceById(
+                                                settings['signups_folder_id')
+        spreadsheets = self.gclient.spreadsheets(signups_folder)
+        #   2.) Discard from list all spreadsheets already in Spreadsheet table
+        #       (GSClient)
+        new_spreadsheets = self.gclient.filterOutOldSpreadsheets(spreadsheets)
+        #   3.) For all remaining spreadsheets, 
+        #       1.) Convert spreadsheets to batch_dict and person_dict (GClient)
+        #       2.) Import dicts into Batch and Person tables (InitialProcessor)  
+        #            table (InitialProcessor & here)
+        #           1.) If remaining spreadsheet meta sheet contains prev_gsid, add
+        #               Batch Change, and use meta data from previous Batch
+        #               (InitialProcessor & here).
+        #   4.) For all remaining spreadsheets, for each row in Persons sheet
+        #           (InitialProcessor)
+        #       1.) Read in Row
+        #       2.) Add info to Person table
+        #       3.) If spreadsheet with prev_gsid, add entry to Person Change
+        #   5.) For each Person with source_bid == current 
+        #       1.) Generate/Save Opt-Out Token (OptOutProcessor)
+        #       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
+        #           (InitialProcessor)
+        #       3.) Send Email (Initial Processor)
+
         # This is a bit confusing, because the Spreadsheets Client does not 
         # directly support searching for a folder. So, a Docs Client is first
         # used to search for the folder we want to retreive spreadsheets from.
