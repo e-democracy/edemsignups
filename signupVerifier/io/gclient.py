@@ -69,11 +69,11 @@ class GClient(object):
             Output: A ListRow instance containing the data of d
         """
         # Clean/rearrange some keys
-        d['person_where?'] = d['born_where']
+        d['personwhere?'] = d['born_where']
         del d['born_where']
-        d['parents_where?'] = d['parents_born_where']
+        d['parentswhere?'] = d['parents_born_where']
         del d['parents_born_where']
-        d['#_in_house'] = d['num_in_house']
+        d['#inhouse'] = d['num_in_house']
         del d['num_in_house']
         for i,forum in enumerate(d['forums']):
             d[i] = forum
@@ -82,9 +82,10 @@ class GClient(object):
             del d['source_batch']
         
         # Create the ListRow
-        row = ListRow()
-        for key, value in d:
-            row.SetValue(key, value)
+        row = ListEntry()
+        row.from_dict(d)
+        #for key, value in d:
+        #    row.SetValue(key, value)
 
         return row
 
@@ -97,6 +98,7 @@ class GClient(object):
             raise TypeError('Row to Dict conversion requires a ListRow')
 
         d = r.to_dict()
+        return d
 
     def metaRowToDict(self, r):
         """
@@ -119,17 +121,43 @@ class GClient(object):
         d = self.rowToDict(r)
 
         # Convert some keys
-        d['bornwhere'] = d['personwhere?']
+        d['born_where'] = d['personwhere?']
         del d['personwhere?']
-        d['parentsbornwhere'] = d['parentswhere?']
+        d['parents_born_where'] = d['parentswhere?']
         del d['parentswhere?']
-        d['numinhouse'] = d['#inhouse']
+        d['num_in_house'] = d['#inhouse']
         del d['#inhouse']
         d['forums'] = []
         forum_keys = [key for key in d.keys() if key.isdigit()]
         for i in forum_keys.sorted():
             d['forums'].append(d[i])
             del d[i]
+
+    def getListFeed(self, spreadsheet, title):
+        """
+            A general method for finding and retrieving the ListFeed for a
+            sheet of a specified name (title).
+
+            Input:  spreadsheet - a Resource instance of a spreadsheet with
+                                    a sheet of the specified name.
+                    title - The specific sheet to look for
+            Output: A ListFeed of the specified sheet
+        """
+        if not isinstance(spreadsheet, Resource) and \
+                        spreadsheet.GetResourceType() != 'spreadsheet':
+            raise TypeError('a Resource instance of type spreadsheet required')
+
+        sid = spreadsheet_id(spreadsheet)
+        q = WorksheetQuery(title = title)
+        sheets = self.spreadsheetsClient.GetWorksheets(sid, q=q).entry
+
+        if len(sheets) == 0:
+            raise LookupError('Provided spreadsheet does not have a %s sheet' % 
+                                title)
+        
+        sheet_id = worksheet_id(sheets[0])
+        return self.spreadsheetsClient.GetListFeed(sid, sheet_id).entry
+
 
     def getMetaListFeed(self, spreadsheet):
         """
@@ -140,26 +168,19 @@ class GClient(object):
                                  Meta sheet.
             Output: A ListFeed of the Meta sheet
         """
-        if not isinstance(spreadsheet, Resource) and \
-                        spreadsheet.GetResourceType() != 'spreadsheet':
-            raise TypeError('a Resource instance of type spreadsheet required')
-
-        sid = spreadsheet_id(spreadsheet)
-        q = WorksheetQuery(title = settings['meta_sheet_title'])
-        meta_sheets = self.spreadsheetsClient.GetWorksheets(sid, q=q).entry
-
-        if len(meta_sheets) == 0:
-            raise LookupError('Provided spreadsheet does not have a %s sheet' % 
-                                settings['meta_sheet_title'])
+        return self.getListFeed(spreadsheet, settings['meta_sheet_title'])
         
-        meta_sheet_id = worksheet_id(meta_sheets[0])
-        return self.spreadsheetsClient.GetListFeed(sid, meta_sheet_id).entry
-
-
     def getRawListFeed(self, spreadsheet):
         """
+            Finds and retrieves the ListFeed for the Raw sheet in the provided
+            Spreadsheet.
 
+            Input: spreadsheet - a Resource instance of a spreadsheet with a
+                                 Raw sheet.
+            Output: A ListFeed of the Raw sheet
         """
+        return self.getListFeed(spreadsheet, settings['raw_sheet_title'])
+
 
     def cloneRawSheet(self, new_spreadsheet_id, orig_spreadsheet_id, 
                         headers_to_add):

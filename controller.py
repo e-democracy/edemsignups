@@ -35,7 +35,10 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         #       (GSClient)
         new_spreadsheets = self.gclient.filterOutOldSpreadsheets(spreadsheets)
         #   3.) For all remaining spreadsheets, 
-        #       1.) Convert spreadsheets to batch_dict and person_dict (GClient)
+        for new_spreadsheet in new_spreadsheets:
+            #  1.) Convert spreadsheets to batch_dict and person_dict (GClient)
+            meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
+            meta_dict = self.gclient.metaRowToDict(meta_list_feed)
         #       2.) Import dicts into Batch and Person tables (InitialProcessor)  
         #            table (InitialProcessor & here)
         #           1.) If remaining spreadsheet meta sheet contains prev_gsid, add
