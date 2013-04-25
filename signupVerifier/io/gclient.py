@@ -121,17 +121,34 @@ class GClient(object):
         d = self.rowToDict(r)
 
         # Convert some keys
-        d['born_where'] = d['personwhere?']
-        del d['personwhere?']
-        d['parents_born_where'] = d['parentswhere?']
-        del d['parentswhere?']
-        d['num_in_house'] = d['#inhouse']
-        del d['#inhouse']
+        key_map = {
+            'first_name':'firstname',
+            'last_name':'lastname',
+            'full_name':'fullname',
+            'street_address':'streetaddress',
+            'zip_code':'zipcode',
+            'stated_race':'statedrace',
+            'census_race':'censusrace',
+            'year_born':'yearborn',
+            'born_out_of_us':'bornoutofus',
+            'born_where': 'personwhere',
+            'parents_born_out_of_us':'parentsbornoutofus',
+            'parents_born_where': 'parentswhere',
+            'num_in_house': 'inhouse',
+            'yrly_income': 'yrlyincome'
+        }
+
+        for dict_key, row_key in key_map.iteritems():
+            d[dict_key] = d[row_key]
+            del d[row_key]
         d['forums'] = []
-        forum_keys = [key for key in d.keys() if key.isdigit()]
-        for i in forum_keys.sorted():
-            d['forums'].append(d[i])
+        forum_keys = [key for key in d.keys() if key.startswith('_')]
+        for i in forum_keys:
+            if d[i] is not None:
+                d['forums'].append(d[i])
             del d[i]
+
+        return d
 
     def getListFeed(self, spreadsheet, title):
         """

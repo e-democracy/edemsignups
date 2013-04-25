@@ -39,6 +39,10 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             #  1.) Convert spreadsheets to batch_dict and person_dict (GClient)
             meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
             meta_dict = self.gclient.metaRowToDict(meta_list_feed)
+            person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
+            person_dicts = [self.gclient.personRowToDict(person_list_entry) for
+                            person_list_entry in person_list_feed if
+                            person_list_entry.get_value('email') is not None]
         #       2.) Import dicts into Batch and Person tables (InitialProcessor)  
         #            table (InitialProcessor & here)
         #           1.) If remaining spreadsheet meta sheet contains prev_gsid, add
