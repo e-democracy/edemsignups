@@ -6,7 +6,7 @@ class Batch(db.Model):
     """ Represents a batch of sign-ups gathered at a particular event and
     entered by a particular staff person."""
     staff_name = db.StringProperty(required = True)
-    staff_email = db.Email(required = True)
+    staff_email = db.EmailProperty(required = True)
     event_name = db.StringProperty()
     event_date = db.DateProperty()
     event_location = db.StringProperty()
@@ -14,13 +14,15 @@ class Batch(db.Model):
 
 class BatchChange(db.Model):
     """ Represents an evolution of a batch"""
-    cur_batch = db.ReferenceProperty(Batch, required = True)
-    prev_batch = db.ReferenceProperty(Batch, required = True)
+    cur_batch = db.ReferenceProperty(Batch, required = True,
+                collection_name="previous_changes")
+    prev_batch = db.ReferenceProperty(Batch, required = True,
+                collection_name="next_changes")
 
 class Person(db.Model):
     """ A person who signed up during an event, along with captured information
     about that person."""
-    email = db.Email(required = True)
+    email = db.EmailProperty(required = True)
     first_name = db.StringProperty(required = True)
     last_name = db.StringProperty(required = True)
     full_name = db.StringProperty(required = True)
@@ -29,7 +31,7 @@ class Person(db.Model):
     city = db.StringProperty()
     state = db.StringProperty()
     zip_code = db.StringProperty()
-    phone = db.PhoneNumber()
+    phone = db.PhoneNumberProperty()
     forums = db.StringListProperty()
     # Demographics
     stated_race = db.StringProperty()
@@ -55,8 +57,10 @@ class Person(db.Model):
 
 class PersonChange(db.Model):
     """ Represents an evolution of person"""
-    cur_person = db.ReferenceProperty(Person, required = True)
-    prev_person = db.ReferenceProperty(Person, required = True)
+    cur_person = db.ReferenceProperty(Person, required = True,
+                    collection_name="previous_changes")
+    prev_person = db.ReferenceProperty(Person, required = True,
+                    collection_name="next_changes")
 
 class BatchSpreadsheet(db.Model):
     """ Indicates connections between Google Spreadsheets and Batches """

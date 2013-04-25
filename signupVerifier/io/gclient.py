@@ -78,7 +78,7 @@ class GClient(object):
         for i,forum in enumerate(d['forums']):
             d[i] = forum
         del d['forums']
-        if hasattr(d, 'source_batch']:
+        if hasattr(d, 'source_batch'):
             del d['source_batch']
         
         # Create the ListRow
@@ -198,7 +198,7 @@ class GClient(object):
         return result
 
     def cloneSpreadsheetForFailure(self, ogsid, batch_id, 
-                                    suffix = None, headers_to_add):
+                                    suffix = None, headers_to_add = []):
         """
         Creates a new Google Spreadsheet that is a clone of the
         structure/metadata of the spreadsheet used as input for the provided
@@ -273,8 +273,8 @@ class GClient(object):
             raise TypeError('batch must be a Batch instance')
         if not hasattr(batch, 'spreadsheets') or \
                 len(batch.spreadsheets.get()) == 0:
-            raise LookupError('Provided batch does not have a Google
-                                Spreadsheet associated with it.')
+            raise LookupError('Provided batch does not have a Google' + \
+                                'Spreadsheet associated with it.')
 
         ogsid = batch.spreadsheets.get.gsid
         batch_id = batch.key()
@@ -324,8 +324,8 @@ class GClient(object):
             raise TypeError('batch must be a Batch instance')
         if not hasattr(batch, 'spreadsheets') or \
                 len(batch.spreadsheets.get()) == 0:
-            raise LookupError('Provided batch does not have a Google
-                                Spreadsheet associated with it.')
+            raise LookupError('Provided batch does not have a Google' + \
+                                'Spreadsheet associated with it.')
 
         ogsid = batch.spreadsheets.get.gsid
         batch_id = batch.key()
