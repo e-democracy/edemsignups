@@ -31,6 +31,24 @@ def worksheet_id(worksheet):
     assert wid
     return wid
 
+person_key_map = {
+        'first_name':'firstname',
+        'last_name':'lastname',
+        'full_name':'fullname',
+        'street_address':'streetaddress',
+        'zip_code':'zipcode',
+        'stated_race':'statedrace',
+        'census_race':'censusrace',
+        'year_born':'yearborn',
+        'born_out_of_us':'bornoutofus',
+        'born_where': 'personwhere',
+        'parents_born_out_of_us':'parentsbornoutofus',
+        'parents_born_where': 'parentswhere',
+        'num_in_house': 'inhouse',
+        'yrly_income': 'yrlyincome'
+    }
+
+
 class GClient(object):
     def __init__(self):
         self.__docsClient__ = None
@@ -60,6 +78,15 @@ class GClient(object):
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
 
+    def dictToRow(self, d):
+        """
+            A general dict -> ListEntry converter. Does not make any changs to
+            keys or data.
+        """
+        row = ListEntry()
+        row.from_dict(d)
+        return row
+
     def personDictToRow(self, d):
         """
             Converts a dict to a spreadsheet ListRow. The dict's keys will be
@@ -68,26 +95,17 @@ class GClient(object):
             Input: d - a dict
             Output: A ListRow instance containing the data of d
         """
-        # Clean/rearrange some keys
-        d['personwhere?'] = d['born_where']
-        del d['born_where']
-        d['parentswhere?'] = d['parents_born_where']
-        del d['parents_born_where']
-        d['#inhouse'] = d['num_in_house']
-        del d['num_in_house']
+        # Clean/rearrange keys
+        for dict_key, row_key in person_key_map.iteritems():
+            d[row_key] = d[dict_key]
+            del d[dict_key]
         for i,forum in enumerate(d['forums']):
             d[i] = forum
         del d['forums']
         if hasattr(d, 'source_batch'):
             del d['source_batch']
         
-        # Create the ListRow
-        row = ListEntry()
-        row.from_dict(d)
-        #for key, value in d:
-        #    row.SetValue(key, value)
-
-        return row
+        return self.dictToRow(d)
 
     def rowToDict(self, r):
         """
@@ -121,24 +139,7 @@ class GClient(object):
         d = self.rowToDict(r)
 
         # Convert some keys
-        key_map = {
-            'first_name':'firstname',
-            'last_name':'lastname',
-            'full_name':'fullname',
-            'street_address':'streetaddress',
-            'zip_code':'zipcode',
-            'stated_race':'statedrace',
-            'census_race':'censusrace',
-            'year_born':'yearborn',
-            'born_out_of_us':'bornoutofus',
-            'born_where': 'personwhere',
-            'parents_born_out_of_us':'parentsbornoutofus',
-            'parents_born_where': 'parentswhere',
-            'num_in_house': 'inhouse',
-            'yrly_income': 'yrlyincome'
-        }
-
-        for dict_key, row_key in key_map.iteritems():
+        for dict_key, row_key in person_key_map.iteritems():
             d[dict_key] = d[row_key]
             del d[row_key]
         d['forums'] = []
