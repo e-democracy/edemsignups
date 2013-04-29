@@ -47,20 +47,19 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                             person_list_entry.get_value('email') is not None]
 
             # TODO See if this can be made a transaction
-            batch = importBatch(meta_dict)
-            persons = [importPerson(person_dict, batch) for person_dict in
+            # 2.) Import dicts into Batch and Person tables (InitialProcessor)  
+            #       table (InitialProcessor & here)
+            if hasattr(meta_dict, 'prev_batch'):
+                batch = importBatchChange(meta_dict, meta_dict['prev_batch'])
+                persons = []
+                for person_dict in person_dicts:
+                    person_dict['source_batch'] = batch.key()
+                    importPersonChange(person_dict, person_dict['person_id']) 
+            else:
+                batch = importBatch(meta_dict)
+                persons = [importPerson(person_dict, batch) for person_dict in
                         person_dicts]
 
-        #       2.) Import dicts into Batch and Person tables (InitialProcessor)  
-        #            table (InitialProcessor & here)
-        #           1.) If remaining spreadsheet meta sheet contains prev_gsid, add
-        #               Batch Change, and use meta data from previous Batch
-        #               (InitialProcessor & here).
-        #   4.) For all remaining spreadsheets, for each row in Persons sheet
-        #           (InitialProcessor)
-        #       1.) Read in Row
-        #       2.) Add info to Person table
-        #       3.) If spreadsheet with prev_gsid, add entry to Person Change
         #   5.) For each Person with source_bid == current 
         #       1.) Generate/Save Opt-Out Token (OptOutProcessor)
         #       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
