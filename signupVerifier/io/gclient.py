@@ -185,7 +185,7 @@ class GClient(object):
         # Casting
         yes = ['yes', 'true']
         d['num_in_house'] = int(d['num_in_house'])
-        d['yrly_income'] = int)d['yrly_income'])
+        d['yrly_income'] = int(d['yrly_income'])
         d['born_out_of_us'] = d['born_out_of_us'].lower() in yes
         d['parents_born_out_of_us'] = d['parents_born_out_of_us'].lower() in yes
         for i in forum_keys:
