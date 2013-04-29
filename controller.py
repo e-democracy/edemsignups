@@ -3,7 +3,9 @@
 import webapp2
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-from signupVerifier.gclient import GClient
+from signupVerifier.io.gclient import GClient
+from signupVerifier.processors.initial_processor import importBatch,\
+                    importPerson
 
 import logging
 
@@ -43,6 +45,12 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             person_dicts = [self.gclient.personRowToDict(person_list_entry) for
                             person_list_entry in person_list_feed if
                             person_list_entry.get_value('email') is not None]
+
+            # TODO See if this can be made a transaction
+            batch = importBatch(meta_dict)
+            persons = [importPerson(person_dict, batch) for person_dict in
+                        person_dicts]
+
         #       2.) Import dicts into Batch and Person tables (InitialProcessor)  
         #            table (InitialProcessor & here)
         #           1.) If remaining spreadsheet meta sheet contains prev_gsid, add
