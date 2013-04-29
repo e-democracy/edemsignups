@@ -1,6 +1,6 @@
 # coding=utf-8
 from google.appengine.ext.webapp import template
-from google.app.engine.api import mail
+from google.appengine.api import mail
 
 from ..settings import settings
 from ..models import Batch, BatchChange, Person, PersonChange
@@ -27,7 +27,10 @@ def importBatch(batch):
     if not isinstance(batch, dict):
         raise TypeError('Expected dict')
 
-    batch_record = Batch(batch)
+    batch_record = Batch(staff_email = batch['staff_email'],
+                            staff_name=batch['staff_name'])
+    for key, value in batch.iteritems():
+        setattr(batch_record, key, value)
     batch_record.put()
 
     return batch_record
@@ -97,8 +100,13 @@ def importPerson(person, batch):
     if not (batch and isinstance(batch, Batch)):
         raise LookupError('provided batch could not be found')
 
-    person_record = Person(person)
-    person_record.source_batch = batch
+    person_record = Person(email = person['email'],
+                           first_name = person['first_name'],
+                           last_name = person['last_name'],
+                           full_name = person['full_name'],
+                           source_batch = batch)
+    for key, value in person.iteritems():
+        setattr(person_record, key, value)
     person_record.put()
 
     return person_record

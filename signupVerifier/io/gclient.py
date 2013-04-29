@@ -1,4 +1,5 @@
 # coding=utf-8
+import datetime
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.docs.data import Resource
 from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery
@@ -158,6 +159,9 @@ class GClient(object):
             d[dict_key] = d[row_key]
             del d[row_key]
 
+        d['event_date'] = datetime.datetime.strptime(d['event_date'],
+                            "%m/%d/%Y").date()
+
         return d
 
     def personRowToDict(self, r):
@@ -176,7 +180,14 @@ class GClient(object):
             del d[row_key]
         d['forums'] = []
         forum_keys = [key for key in d.keys() if key.startswith('_') or
-                                                key.isDigit()]
+                                                key.isdigit()]
+
+        # Casting
+        yes = ['yes', 'true']
+        d['num_in_house'] = int(d['num_in_house'])
+        d['yrly_income'] = int)d['yrly_income'])
+        d['born_out_of_us'] = d['born_out_of_us'].lower() in yes
+        d['parents_born_out_of_us'] = d['parents_born_out_of_us'].lower() in yes
         for i in forum_keys:
             if d[i] is not None:
                 d['forums'].append(d[i])
