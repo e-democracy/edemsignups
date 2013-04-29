@@ -31,6 +31,14 @@ def worksheet_id(worksheet):
     assert wid
     return wid
 
+meta_key_map = {
+    'staff_name':'staffname',
+    'staff_email':'staffemail',
+    'event_name':'eventname',
+    'event_date':'eventdate',
+    'event_location':'eventlocation'
+}
+
 person_key_map = {
         'first_name':'firstname',
         'last_name':'lastname',
@@ -87,12 +95,30 @@ class GClient(object):
         row.from_dict(d)
         return row
 
+    def metaDictToRow(self, d):
+        """
+            Converts a meta dict to a spreadsheet ListRow. Modified version of
+            the dict's keys will be used as the attribute names of the ListRow.
+
+            Input: d - a dict that represents meta information about a batch
+            Output: A ListRow instance containing the data of d
+        """
+        # Fix keys
+        for dict_key, row_key in meta_key_map.iteritems():
+            d[row_key] = d[dict_key]
+            del d[dict_key]
+
+        if hasattr(d, 'created'):
+            del d['created']
+
+        return self.dictToRow(d)
+
     def personDictToRow(self, d):
         """
-            Converts a dict to a spreadsheet ListRow. The dict's keys will be
-            used as the attribute names of the ListRow.
+            Converts a person dict to a spreadsheet ListRow. The dict's keys 
+            will be used as the attribute names of the ListRow.
 
-            Input: d - a dict
+            Input: d - a dict that represents information about a person
             Output: A ListRow instance containing the data of d
         """
         # Clean/rearrange keys
@@ -126,6 +152,12 @@ class GClient(object):
             Output: A dict containing the data of r
         """
         d = self.rowToDict(r)
+
+        # Convert keys
+        for dict_key, row_key in meta_key_map.iteritems():
+            d[dict_key] = d[row_key]
+            del d[row_key]
+
         return d
 
     def personRowToDict(self, r):
