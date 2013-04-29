@@ -40,21 +40,21 @@ meta_key_map = {
 }
 
 person_key_map = {
-        'first_name':'firstname',
-        'last_name':'lastname',
-        'full_name':'fullname',
-        'street_address':'streetaddress',
-        'zip_code':'zipcode',
-        'stated_race':'statedrace',
-        'census_race':'censusrace',
-        'year_born':'yearborn',
-        'born_out_of_us':'bornoutofus',
-        'born_where': 'personwhere',
-        'parents_born_out_of_us':'parentsbornoutofus',
-        'parents_born_where': 'parentswhere',
-        'num_in_house': 'inhouse',
-        'yrly_income': 'yrlyincome'
-    }
+    'first_name':'firstname',
+    'last_name':'lastname',
+    'full_name':'fullname',
+    'street_address':'streetaddress',
+    'zip_code':'zipcode',
+    'stated_race':'statedrace',
+    'census_race':'censusrace',
+    'year_born':'yearborn',
+    'born_out_of_us':'bornoutofus',
+    'born_where': 'personwhere',
+    'parents_born_out_of_us':'parentsbornoutofus',
+    'parents_born_where': 'parentswhere',
+    'num_in_house': 'inhouse',
+    'yrly_income': 'yrlyincome'
+}
 
 
 class GClient(object):
@@ -175,7 +175,8 @@ class GClient(object):
             d[dict_key] = d[row_key]
             del d[row_key]
         d['forums'] = []
-        forum_keys = [key for key in d.keys() if key.startswith('_')]
+        forum_keys = [key for key in d.keys() if key.startswith('_') or
+                                                key.isDigit()]
         for i in forum_keys:
             if d[i] is not None:
                 d['forums'].append(d[i])
