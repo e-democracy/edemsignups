@@ -5,7 +5,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.api import mail
 from signupVerifier.io.gclient import GClient
 from signupVerifier.processors.initial_processor import importBatch,\
-                    importPerson
+                    importPerson, addBatchChange, addPersonChange
 
 import logging
 
@@ -50,13 +50,13 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # 2.) Import dicts into Batch and Person tables (InitialProcessor)  
             #       table (InitialProcessor & here)
             if 'prev_batch' in meta_dict:
-                batch = importBatchChange(meta_dict, meta_dict['prev_batch'])
+                batch = addBatchChange(meta_dict, meta_dict['prev_batch'])
                 batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
                                         new_spreadsheet)
                 persons = []
                 for person_dict in person_dicts:
                     person_dict['source_batch'] = batch.key()
-                    importPersonChange(person_dict, person_dict['person_id']) 
+                    addPersonChange(person_dict, person_dict['person_id']) 
             else:
                 batch = importBatch(meta_dict)
                 batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
