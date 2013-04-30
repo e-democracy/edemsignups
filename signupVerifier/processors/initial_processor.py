@@ -154,15 +154,16 @@ def sendVerificationEmails(batch):
     Side Effect: Emails are sent to all Person associated with the Batch
                     model.
     """
-    if not isinstance(batch):
-        raise TypeError('batch must be a Batch instance')
+    batch = Batch.verifyOrGet(batch)
 
     for person in batch.persons.get():
+        optout_token = person.optout_tokens.filter('batch =', batch).get() 
         template_values = {
             'first_name': person.first_name,
             'last_name': person.last_name,
             'full_name': person.full_name,
-            'email': person.email
+            'email': person.email,
+            'optout_token': optout_token.key()
         }
 
         mail.send_mail(settings['email_as'],

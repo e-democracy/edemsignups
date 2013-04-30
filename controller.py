@@ -69,14 +69,16 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 persons = [importPerson(person_dict, batch) for person_dict in
                         person_dicts]
 
+            #5.) For each Person with source_bid == current 
             for person in persons:
+                # 1.) Generate/Save Opt-Out Token (OptOutProcessor)
                 token = createOptOutToken(batch, person)
+                # 2.) Generate Email based on Opt-Out Token, Spreadsheet, and 
+                # Person (InitialProcessor)
 
-        #   5.) For each Person with source_bid == current 
-        #       1.) Generate/Save Opt-Out Token (OptOutProcessor)
-        #       2.) Generate Email based on Opt-Out Token, Spreadsheet, and Person
-        #           (InitialProcessor)
-        #       3.) Send Email (Initial Processor)
+            sendVerificationEmails(batch)
+
+                #       3.) Send Email (Initial Processor)
 
         # This is a bit confusing, because the Spreadsheets Client does not 
         # directly support searching for a folder. So, a Docs Client is first

@@ -128,15 +128,17 @@ class BatchSpreadsheet(db.Model):
 class OptOutToken(db.Model):
     """ The tokens used to associate an opt-out request with a person and 
     batch"""
-    token = db.StringProperty(required = True)
-    person = db.ReferenceProperty(Person, required = True)
-    batch = db.ReferenceProperty(Batch, required = True)
+    person = db.ReferenceProperty(Person, required = True,
+                                    collection_name='optout_tokens')
+    batch = db.ReferenceProperty(Batch, required = True,
+                                    collection_name='optout_tokens')
 
 class OptOut(db.Model):
     """ Record of a person opting out"""
-    person = db.ReferenceProperty(Person, required = True)
+    person = db.ReferenceProperty(Person, required = True,
+                                    collection_name='optouts')
     batch = db.ReferenceProperty(Batch, required = True, 
-                                    collection_name='OptOuts')
+                                    collection_name='optouts')
     reason = db.Text()
     occurred = db.DateTimeProperty()
 
@@ -144,6 +146,6 @@ class Bounce(db.Model):
     """ Record of a bounce"""
     person = db.ReferenceProperty(Person, required = True)
     batch = db.ReferenceProperty(Batch, required = True, 
-                                 collection_name='Bounces')
+                                 collection_name='bounces')
     message = db.Text()
     occurred = db.DateTimeProperty()
