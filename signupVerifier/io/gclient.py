@@ -504,19 +504,17 @@ class GClient(object):
     # Spreadsheet specific db functions
     ####################################
 
-    def importBatchSpreadsheet(self, batch, spreadsheet_id):
+    def importBatchSpreadsheet(self, batch, spreadsheet):
         """
             Adds an entry to the database associated the provided batch with
             the provided spreadsheet_id.
 
             Input:  batch - a Batch instance of a key for a Batch instance
-                    spreadsheet_id - ID of the Goolge Spreadsheet to associate
-                                     the batch with
+                    spreadsheet - Resource instance of type spreadsheet to 
+                                    associate the batch with
             Output: An instance of BatchSpreadsheet if successful, False
                     otherwise
         """
-        if not isinstance(batch, dict):
-            raise TypeError('Expected batch to be dict')
         if not (isinstance(batch, basestring) or \
                     isinstance(batch, Batch)):
             raise TypeError('batch must be either string or Batch')
@@ -529,7 +527,13 @@ class GClient(object):
         if not (batch and isinstance(batch, Batch)):
             raise LookupError('provided batch could not be found') 
 
-        bs_record = BatchSpreadsheet(gsid = spreadsheet_id, batch = batch)
+        if not isinstance(spreadsheet, Resource) and \
+                        spreadsheet.GetResourceType() != 'spreadsheet':
+            raise TypeError('a Resource instance of type spreadsheet required')
+
+        sid = spreadsheet_id(spreadsheet)
+
+        bs_record = BatchSpreadsheet(gsid = sid, batch = batch)
         bs_record.put()
 
         return bs_record
