@@ -56,7 +56,7 @@ def addBatchChange(batch, prev_batch):
 
     prev_batch = Batch.verifyOrGet(prev_batch)
 
-    cur_batch = clone_entity(prev_batch, True, True, batch)
+    cur_batch = clone_entity(prev_batch, True, True, extra_args = batch)
     cur_batch.put()
 
     change_record = BatchChange(cur_batch = cur_batch,
