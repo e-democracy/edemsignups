@@ -160,9 +160,6 @@ class GClient(object):
         d = self.rowToDict(r)
 
         # Convert keys
-        if hasattr(d, 'prevbatch'):
-            d['prev_batch'] = d['prevbatch']
-            del d['prevbatch']
         for dict_key, row_key in meta_key_map.iteritems():
             if hasattr(d, row_key):
                 d[dict_key] = d[row_key]
