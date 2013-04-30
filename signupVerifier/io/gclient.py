@@ -37,7 +37,8 @@ meta_key_map = {
     'staff_email':'staffemail',
     'event_name':'eventname',
     'event_date':'eventdate',
-    'event_location':'eventlocation'
+    'event_location':'eventlocation',
+    'prev_batch':'prevbatch'
 }
 
 person_key_map = {
