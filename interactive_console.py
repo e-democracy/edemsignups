@@ -1,5 +1,6 @@
 from signupVerifier.io.gclient import *
 from signupVerifier.processors.initial_processor import *
+from signupVerifier.processors.optout_processor import *
 gclient = GClient()
 print "Getting Signups Folder"
 signups_folder = gclient.docsClient.GetResourceById('0B9kNsX36XQLDSUhmNU54djR6S00')
@@ -32,3 +33,8 @@ for new_ss in new_sss:
         batchSpreadsheet = gclient.importBatchSpreadsheet(batch, new_ss)
         persons = [importPerson(person_dict, batch) for person_dict in person_dicts]
         print "New Batch imported"
+    print "Creating Tokens"
+    for person in persons:
+        token = createOptOutToken(batch, person)
+    print "Sending Emails"
+    sendVerificationEmails(batch)

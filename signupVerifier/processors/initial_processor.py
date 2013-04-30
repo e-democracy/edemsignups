@@ -156,7 +156,12 @@ def sendVerificationEmails(batch):
     """
     batch = Batch.verifyOrGet(batch)
 
-    for person in batch.persons.get():
+    pq = Person.all().filter('source_batch =', batch)
+
+    print "Persons in this batch: %d" % batch.persons.count()
+
+    for person in pq.run():
+        print "Sending an email to %s" % person.full_name
         optout_token = person.optout_tokens.filter('batch =', batch).get() 
         template_values = {
             'first_name': person.first_name,
@@ -166,9 +171,12 @@ def sendVerificationEmails(batch):
             'optout_token': optout_token.key()
         }
 
+        email_body = template.render(verification_email_template_path)
+        print email_body
+
         mail.send_mail(settings['email_as'],
                         template_values['email'],
                         settings['verification_subject'],
-                        template.render(verification_email_template_path))
+                        email_body)
 
     return True
