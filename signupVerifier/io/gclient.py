@@ -159,11 +159,16 @@ class GClient(object):
         d = self.rowToDict(r)
 
         # Convert keys
+        if hasattr(d, 'prevbatch'):
+            d['prev_batch'] = d['prevbatch']
+            del d['prev_batch']
         for dict_key, row_key in meta_key_map.iteritems():
-            d[dict_key] = d[row_key]
-            del d[row_key]
+            if hasattr(d, row_key):
+                d[dict_key] = d[row_key]
+                del d[row_key]
 
-        d['event_date'] = datetime.datetime.strptime(d['event_date'],
+        if hasattr(d, 'event_date'):
+            d['event_date'] = datetime.datetime.strptime(d['event_date'],
                             "%m/%d/%Y").date()
 
         return d
