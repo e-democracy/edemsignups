@@ -12,6 +12,35 @@ class Batch(db.Model):
     event_location = db.StringProperty()
     created = db.DateTimeProperty(required = True, auto_now_add = True)
 
+    @classmethod
+    def verifyOrGet(cls, batch):
+        """
+            Verifies that the provided batch refers in some way to an actual
+            Batch instance, and returns the Batch instance it refers to. If
+            batch is a Batch instance, than it will simply be returned. If
+            batch is a string, then the method will assume it is a key and
+            attempt to retrieve the Batch instance associated with it.
+
+            Input: batch - Either a Batch instance, or a string that is the key
+                            of a Batch instance.
+            Output: A Batch instance
+            Throws: TypeError if batch is not a string or Batch
+                    LookupError if batch can not be found
+        """
+        if isinstance(batch, Batch):
+            return batch
+
+        if isinstance(batch, basestring):
+            batch_key = batch
+            batch = Batch.get(batch_key)
+            if not (batch and isinstance(batch, Batch)):
+                raise LookupError('provided batch could not be found: %s' %
+                                    batch_key)
+            return batch
+        else:
+            raise TypeError('batch must be either string or Batch')
+    
+
 class BatchChange(db.Model):
     """ Represents an evolution of a batch"""
     cur_batch = db.ReferenceProperty(Batch, required = True,

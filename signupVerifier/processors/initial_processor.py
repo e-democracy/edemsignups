@@ -49,20 +49,12 @@ def addBatchChange(batch, prev_batch):
     Side Effect: an entry is saved to the database for the batch, and an
                  association between the new batch and its previous 
                  instance is saved.
+    Throws: TypeError if batch is not a dict
     """
     if not isinstance(batch, dict):
         raise TypeError('Expected batch to be dict')
-    if not (isinstance(prev_batch, basestring) or \
-                isinstance(prev_batch, Batch)):
-        raise TypeError('prev_batch must be either string or Batch')
 
-    if isinstance(prev_batch, basestring):
-        q = Batch.all()
-        q.filter('__key__ =', prev_batch)
-        prev_batch = q.get()
-
-    if not (prev_batch and isinstance(prev_batch, Batch)):
-        raise LookupError('provided prev_batch could not be found')
+    prev_batch = Batch.verifyOrGet(prev_batch)
 
     cur_batch = clone_entity(prev_batch, True, True, batch)
     cur_batch.put()
@@ -85,20 +77,12 @@ def importPerson(person, batch):
                     associated with.
     Output: a Person model craeted by the import.
     Side Effect: an entry is saved to the database for the person.
+    Throws: TypeError if person is not a dict
     """
     if not isinstance(person, dict):
         raise TypeError('Expected person to be dict')
-    if not (isinstance(batch, basestring) or \
-                isinstance(batch, Batch)):
-        raise TypeError('batch must be either string or Batch')
 
-    if isinstance(batch, basestring):
-        q = Batch.all()
-        q.filter('__key__ =', batch)
-        batch = q.get()
-
-    if not (batch and isinstance(batch, Batch)):
-        raise LookupError('provided batch could not be found')
+    batch = Batch.verifyOrGet(batch)
 
     person_record = Person(email = person['email'],
                            first_name = person['first_name'],
@@ -162,17 +146,7 @@ def importPersons(persons, batch):
     Side Effect: Entries are saved to the database for each person
                     contained in the persons list.
     """
-    if not (isinstance(batch, basestring) or \
-                isinstance(batch, Batch)):
-        raise TypeError('batch must be either string or Batch')
-
-    if isinstance(batch, basestring):
-        q = Batch.all()
-        q.filter('__key__ =', batch)
-        batch = q.get()
-
-    if not (batch and isinstance(batch, Batch)):
-        raise LookupError('provided batch could not be found')
+    batch = Batch.verifyOrGet(batch)
 
     person_records = [importPerson(person, batch) for person in persons]
     return person_records   
