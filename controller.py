@@ -149,29 +149,6 @@ class TestPage(webapp2.RequestHandler):
         assert self.__clients__
         return self.__clients__
 
-    def createBouncedSheet(self, spreadsheet_id, raw_sheet_id):
-        # 1.) Get the top row of the Raw sheet
-        cells = self.clients.spreadsheets.GetCells(spreadsheet_id, 
-                raw_sheet_id, q=CellQuery(1, 1)).entry
-                    
-        # 2.) Make a new worksheet with 1 extra column (and an arbitrary
-        # number of rows)
-        result = self.clients.spreadsheets.AddWorksheet(spreadsheet_id, 
-                                            'Bounced', 50, len(cells)+1)
-        bounced_sheet_id = result.id.text.rsplit('/',1)[1]
-        bounced_cells_update = BuildBatchCellsUpdate(spreadsheet_id,
-                                    bounced_sheet_id)
-        # 3.) Insert the header cells of the Raw sheet into the Bounced
-        # sheet, plus a Bounced header 
-        for i, cell in enumerate(cells):
-            logging.info('Adding %s' % cell.content.text)
-            bounced_cells_update.AddSetCell(1, i+1, cell.content.text)
-
-        bounced_cells_update.AddSetCell(1, i+2, 'Bounced')
-        self.clients.spreadsheets.batch(bounced_cells_update, force=True)
-
-        return result
-
     def get(self):
         retval = ''
         bouncing_email = 'thisAddressDoesNotExistBecauseNoBodyWouldWantSuchALongAndRamblingAddress@gmail.com' 
