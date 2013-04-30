@@ -164,6 +164,9 @@ class GClient(object):
             if row_key in d:
                 d[dict_key] = d[row_key]
                 del d[row_key]
+                if isinstance(d[dict_key], basestring):
+                    d[dict_key] = d[dict_key].strip()
+
 
         if 'event_date' in d:
             d['event_date'] = datetime.datetime.strptime(d['event_date'],
@@ -183,8 +186,11 @@ class GClient(object):
 
         # Convert some keys
         for dict_key, row_key in person_key_map.iteritems():
-            d[dict_key] = d[row_key]
-            del d[row_key]
+            if row_key in d:
+                d[dict_key] = d[row_key]
+                del d[row_key]
+                if isinstance(d[dict_key], basestring):
+                    d[dict_key] = d[dict_key].strip()
         d['forums'] = []
         forum_keys = [key for key in d.keys() if key.startswith('_') or
                                                 key.isdigit()]
