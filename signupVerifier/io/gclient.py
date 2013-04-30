@@ -161,11 +161,11 @@ class GClient(object):
 
         # Convert keys
         for dict_key, row_key in meta_key_map.iteritems():
-            if hasattr(d, row_key):
+            if row_key in d:
                 d[dict_key] = d[row_key]
                 del d[row_key]
 
-        if hasattr(d, 'event_date'):
+        if 'event_date' in d:
             d['event_date'] = datetime.datetime.strptime(d['event_date'],
                             "%m/%d/%Y").date()
 
