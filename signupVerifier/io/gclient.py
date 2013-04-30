@@ -87,6 +87,10 @@ class GClient(object):
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
 
+    #################################
+    # dict <-> ListEntity converters
+    #################################
+
     def dictToRow(self, d):
         """
             A general dict -> ListEntry converter. Does not make any changs to
@@ -194,6 +198,11 @@ class GClient(object):
             del d[i]
 
         return d
+
+    
+    #####################################
+    # Google Drive Interaction Functions
+    #####################################
 
     def getListFeed(self, spreadsheet, title):
         """
@@ -490,6 +499,40 @@ class GClient(object):
         for folder in folders:
             for spreadsheet in self.spreadsheets(folder):
                 yield spreadsheet
+
+    ####################################
+    # Spreadsheet specific db functions
+    ####################################
+
+    def importBatchSpreadsheet(self, batch, spreadsheet_id):
+        """
+            Adds an entry to the database associated the provided batch with
+            the provided spreadsheet_id.
+
+            Input:  batch - a Batch instance of a key for a Batch instance
+                    spreadsheet_id - ID of the Goolge Spreadsheet to associate
+                                     the batch with
+            Output: An instance of BatchSpreadsheet if successful, False
+                    otherwise
+        """
+        if not isinstance(batch, dict):
+            raise TypeError('Expected batch to be dict')
+        if not (isinstance(batch, basestring) or \
+                    isinstance(batch, Batch)):
+            raise TypeError('batch must be either string or Batch')
+        
+        if isinstance(batch, basestring):
+            q = Batch.all()
+            q.filter('__key__ =', batch)
+            batch = q.get()
+        
+        if not (batch and isinstance(batch, Batch)):
+            raise LookupError('provided batch could not be found') 
+
+        bs_record = BatchSpreadsheet(gsid = spreadsheet_id, batch = batch)
+        bs_record.put()
+
+        return bs_record
 
     def filterOutOldSpreadsheets(self, spreadsheets):
         """
