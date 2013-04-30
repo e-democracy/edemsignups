@@ -115,7 +115,7 @@ def addPersonChange(person, prev_person):
   
     prev_person = Person.verifyOrGet(prev_person)
 
-    cur_person = clone_entity(prev_person, True, True, person)
+    cur_person = clone_entity(prev_person, True, True, extra_args = person)
     cur_person.put()
 
     change_record = PersonChange(cur_person = cur_person,
