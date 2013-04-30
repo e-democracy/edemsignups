@@ -51,12 +51,16 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             #       table (InitialProcessor & here)
             if hasattr(meta_dict, 'prev_batch'):
                 batch = importBatchChange(meta_dict, meta_dict['prev_batch'])
+                batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
+                                        new_spreadsheet)
                 persons = []
                 for person_dict in person_dicts:
                     person_dict['source_batch'] = batch.key()
                     importPersonChange(person_dict, person_dict['person_id']) 
             else:
                 batch = importBatch(meta_dict)
+                batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
+                                        new_spreadsheet)
                 persons = [importPerson(person_dict, batch) for person_dict in
                         person_dicts]
 
