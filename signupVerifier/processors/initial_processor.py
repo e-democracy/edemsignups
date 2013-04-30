@@ -112,17 +112,8 @@ def addPersonChange(person, prev_person):
     """
     if not isinstance(person, dict):
         raise TypeError('Expected person to be dict')
-    if not (isinstance(prev_person, basestring) or \
-                isinstance(prev_person, Person)):
-        raise TypeError('prev_person must be either string or Person')
-
-    if isinstance(prev_person, basestring):
-        q = Person.all()
-        q.filter('__key__ =', prev_person)
-        prev_person = q.get()
-
-    if not (prev_person and isinstance(prev_person, Person)):
-        raise LookupError('provided prev_person could not be found')
+  
+    prev_person = Person.verifyOrGet(prev_person)
 
     cur_person = clone_entity(prev_person, True, True, person)
     cur_person.put()

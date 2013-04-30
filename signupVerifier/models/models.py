@@ -84,6 +84,37 @@ class Person(db.Model):
 
         return person_dict
 
+    @classmethod
+    def verifyOrGet(cls, person):
+        """
+            Verifies that the provided person refers in some way to an actual
+            Person instance, and returns the Person instance it refers to. If
+            person is a Person instance, than it will simply be returned. If
+            person is a string, then the method will assume it is a key and
+            attempt to retrieve the Person instance associated with it.
+
+            Input: person - Either a Person instance, or a string that is the 
+                            key of a Person instance.
+            Output: A Person instance
+            Throws: TypeError if person is not a string or Person
+                    LookupError if person can not be found
+        """
+        if isinstance(person, Person):
+            return person
+
+        if isinstance(person, basestring):
+            person_key = person
+            person = Person.get(person_key)
+            if not (person and isinstance(person, Person)):
+                raise LookupError('provided person could not be found: %s' % 
+                                    person_key) 
+            return person
+        else:
+            raise TypeError('person must be either string or Person')
+                                                                                
+                                                                                
+                
+
 class PersonChange(db.Model):
     """ Represents an evolution of person"""
     cur_person = db.ReferenceProperty(Person, required = True,
