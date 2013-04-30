@@ -55,8 +55,12 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                         new_spreadsheet)
                 persons = []
                 for person_dict in person_dicts:
-                    person_dict['source_batch'] = batch.key()
-                    addPersonChange(person_dict, person_dict['person_id']) 
+                    if 'person_id' in person_dict:
+                        person_dict['source_batch'] = batch.key()
+                        persons.append(addPersonChange(person_dict, 
+                                        person_dict['person_id']))
+                    else:
+                        persons.append(importPerson(person_dict, batch))
             else:
                 batch = importBatch(meta_dict)
                 batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
