@@ -111,9 +111,6 @@ class Person(db.Model):
             return person
         else:
             raise TypeError('person must be either string or Person')
-                                                                                
-                                                                                
-                
 
 class PersonChange(db.Model):
     """ Represents an evolution of person"""

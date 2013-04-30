@@ -28,7 +28,7 @@ def clone_entity(e, skip_auto_now=False, skip_auto_now_add=False, **extra_args):
                 getattr(v, 'auto_now')) or 
                 (skip_auto_now_add and getattr(v, 'auto_now_add')))):
       if type(v) == db.ReferenceProperty:
-        value = getattr(klass, k).get_value_for_datastore(self)
+        value = getattr(klass, k).get_value_for_datastore(e)
       else:
         value = v.__get__(e, klass)
       props[k] = value
