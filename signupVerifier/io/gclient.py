@@ -55,7 +55,8 @@ person_key_map = {
     'parents_born_out_of_us':'parentsbornoutofus',
     'parents_born_where': 'parentswhere',
     'num_in_house': 'inhouse',
-    'yrly_income': 'yrlyincome'
+    'yrly_income': 'yrlyincome',
+    'person_id': 'personid'
 }
 
 
