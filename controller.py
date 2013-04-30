@@ -6,6 +6,7 @@ from google.appengine.api import mail
 from signupVerifier.io.gclient import GClient
 from signupVerifier.processors.initial_processor import importBatch,\
                     importPerson, addBatchChange, addPersonChange
+from signupVerifier.processors.optout_processor import createOptOutToken
 
 import logging
 
@@ -67,6 +68,9 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                         new_spreadsheet)
                 persons = [importPerson(person_dict, batch) for person_dict in
                         person_dicts]
+
+            for person in persons:
+                token = createOptOutToken(batch, person)
 
         #   5.) For each Person with source_bid == current 
         #       1.) Generate/Save Opt-Out Token (OptOutProcessor)

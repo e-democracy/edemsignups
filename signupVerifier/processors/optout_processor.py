@@ -1,6 +1,8 @@
 # coding=utf-8
 
-def createOptOutToken(person):
+from ..models import Batch, Person, OptOutToken 
+
+def createOptOutToken(batch, person):
     """
     Generates an opt-out token for the provided person, saves that token
     to the database, and returns that token.
@@ -9,7 +11,11 @@ def createOptOutToken(person):
     Output: the opt-out token string generated for the Person
     Side Effect: The opt-out token string is saved to the databse
     """
-    pass
+    batch = Batch.verifyOrGet(batch)
+    person = Person.verifyOrGet(person)
+    token = OptOutToken(batch = batch, person = person)
+    token.put()
+    return token
 
 def getPersonByOptOutToken(token):
     """
