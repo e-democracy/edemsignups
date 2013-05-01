@@ -7,7 +7,7 @@ from ..models import Batch, BatchChange, Person, PersonChange
 from ..models.utils import clone_entity
 
 
-verification_email_template_path = 'verification_email.html'
+verification_email_template_path = 'signupVerifier/processors/verification_email.html'
 
 def importBatch(batch):
     """
@@ -156,11 +156,11 @@ def sendVerificationEmails(batch):
     """
     batch = Batch.verifyOrGet(batch)
 
-    pq = Person.all().filter('source_batch =', batch)
+    #pq = Person.all().filter('source_batch =', batch)
 
     print "Persons in this batch: %d" % batch.persons.count()
 
-    for person in pq.run():
+    for person in batch.persons:
         print "Sending an email to %s" % person.full_name
         optout_token = person.optout_tokens.filter('batch =', batch).get() 
         template_values = {
@@ -171,9 +171,8 @@ def sendVerificationEmails(batch):
             'optout_token': optout_token.key()
         }
 
-        email_body = template.render(verification_email_template_path)
-        print email_body
-
+        email_body = template.render(verification_email_template_path,
+                                    template_values)
         mail.send_mail(settings['email_as'],
                         template_values['email'],
                         settings['verification_subject'],
