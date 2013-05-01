@@ -13,6 +13,6 @@ handlers:
   login: admin
 
 - url: /.*
-  script: helloworld.app
+  script: controller.app
   login: admin
 

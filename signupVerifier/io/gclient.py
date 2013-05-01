@@ -146,7 +146,8 @@ class GClient(object):
             keys or data.
         """
         if not isinstance(r, ListEntry):
-            raise TypeError('Row to Dict conversion requires a ListRow')
+            raise TypeError('Row to Dict conversion requires a ListRow,'\
+                             + 'received a %s' % type(r))
 
         d = r.to_dict()
         return d

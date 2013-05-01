@@ -5,8 +5,10 @@ from google.appengine.ext.webapp import template
 from google.appengine.api import mail
 from signupVerifier.io.gclient import GClient
 from signupVerifier.processors.initial_processor import importBatch,\
-                    importPerson, addBatchChange, addPersonChange
+                    importPerson, addBatchChange, addPersonChange,\
+                    sendVerificationEmails 
 from signupVerifier.processors.optout_processor import createOptOutToken
+from signupVerifier.settings import settings
 
 import logging
 log_template = 'log_template.html'
@@ -39,7 +41,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
         # 1.) Get list of all spreadsheets in folder 
         signups_folder = self.gclient.docsClient.GetResourceById(
-                                                settings['signups_folder_id')
+                                                settings['signups_folder_id'])
         spreadsheets = self.gclient.spreadsheets(signups_folder)
 
         # 2.) Discard from that list all spreadsheets already processed
@@ -50,7 +52,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             #  1.) Convert spreadsheets to batch_dict and person_dict (GClient)
             meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
-            meta_dict = self.gclient.metaRowToDict(meta_list_feed)
+            meta_dict = self.gclient.metaRowToDict(meta_list_feed[0])
             person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
             person_dicts = [self.gclient.personRowToDict(person_list_entry) for
                             person_list_entry in person_list_feed if
@@ -109,7 +111,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             # 4.) Generate and send Emails! 
             batch_log = sendVerificationEmails(batch, persons, optout_tokens, 
-                                                log=batch_log)
+                                                batch_log)
             batch_logs.append(batch_log)
 
 
@@ -119,12 +121,12 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             staff_email = batch_log['meta_dict']['staff_email']
             if not staff_email in staff_templates:
                staff_templates[staff_email] = {
-                            'failed_batches' : []
+                            'failed_batches' : [],
                             'successful_batches': []
                         }
             template_values = staff_templates[staff_email]
 
-            if batch_log.error:
+            if batch_log['error']:
                 template_values['failed_batches'].append(
                             {'url': batch_log.spreadsheet_url,
                              'event_name': batch_log['meta_dict']['event_name'],
@@ -132,7 +134,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                              'error': batch_log['error']})
             else:
                 successful_batch = {
-                    'url': batch_log.spreadsheet_url,
+                    'url': batch_log['spreadsheet_url'],
                     'event_name': batch_log['meta_dict']['event_name'],
                     'event_date': batch_log['meta_dict']['event_date'],
                     'successful_persons' : [],
@@ -154,11 +156,15 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         'full_name': full_name,
                         'error': error
                     })
+                template_values['successful_batches'].append(successful_batch)
 
         retval = ''
-        for template_values in staff_templates:
+        import pprint
+        pp = pprint.PrettyPrinter()
+        pp.pprint(staff_templates)
+        for email, template_values in staff_templates.iteritems():
             retval += template.render(log_template, template_values)
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
 
 
@@ -285,6 +291,6 @@ class TestPage(webapp2.RequestHandler):
 #       2.) Add all Person without Bounce or Opt-Out (FinalProcessor)
 #   9.) Email Uploader (FinalProcessor)
 
-app = webapp2.WSGIApplication([('/', MainPage),
+app = webapp2.WSGIApplication([('/', SpreadsheetInitialPage),
                                 ('/test', TestPage)],
                               debug=True)
