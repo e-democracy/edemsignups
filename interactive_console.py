@@ -3,7 +3,7 @@ from signupVerifier.processors.initial_processor import *
 from signupVerifier.processors.optout_processor import *
 gclient = GClient()
 print "Getting Signups Folder"
-signups_folder = gclient.docsClient.GetResourceById('0B9kNsX36XQLDSUhmNU54djR6S00')
+signups_folder = gclient.docsClient.GetResourceById('0B_VUbsCmsj1jTERIX2ZWNDI4cHM')
 print "Getting All Spreadsheets"
 sss = gclient.spreadsheets(signups_folder)
 print "Filtering out previous spreadsheets"
