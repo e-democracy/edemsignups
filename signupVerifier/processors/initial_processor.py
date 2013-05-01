@@ -142,13 +142,24 @@ def importPersons(persons, batch):
     person_records = [importPerson(person, batch) for person in persons]
     return person_records   
 
-def sendVerificationEmails(batch):
+def sendVerificationEmails(batch, persons=None, optout_tokens=None):
     """ 
     Generates an email based on the metadata of the provided batch, each 
     person in the batch, and each person's opt-out token. Then sends the 
     verification email to each person in the batch.
 
-    Input: batch - a Batch model
+    Input:  batch - a Batch model
+            persons - a list of Person models associated with this batch. If
+                not provided, the Batch model will be used to find associated
+                Person models. However, if Person models were very recently
+                associated with the Batch, App Engine may not have yet updated 
+                the Person indexes, necessitating that a list of Person models
+                be provided.
+            optout_tokens - a dict mapping keys of Person models with instances
+                of OptOutToken. Like persons, if not provided, the Batch or
+                provided Person list will be used to find OptOutToken models,
+                but may not be successful if OptOutToken models were recently
+                saved.
     Output: True if verification emails are sent successfully, false
             otherwise.
     Side Effect: Emails are sent to all Person associated with the Batch
@@ -156,13 +167,22 @@ def sendVerificationEmails(batch):
     """
     batch = Batch.verifyOrGet(batch)
 
-    #pq = Person.all().filter('source_batch =', batch)
+    if persons is None:
+        # Can probably use run, except for wanting to check length below for
+        # debugging
+        persons = batch.persons.fetch(limit=None)
 
-    print "Persons in this batch: %d" % batch.persons.count()
+    if optout_tokens is None:
+        optout_tokens = dict()
+        for person in persons:
+            optout_token[person.key()] = person.optout_tokens.filter('batch =', 
+                                            batch).get()
 
-    for person in batch.persons:
+    print "Persons in this batch: %d" % len(persons)
+
+    for person in persons:
         print "Sending an email to %s" % person.full_name
-        optout_token = person.optout_tokens.filter('batch =', batch).get() 
+        optout_token = optout_tokens[person.key()] 
         template_values = {
             'first_name': person.first_name,
             'last_name': person.last_name,
