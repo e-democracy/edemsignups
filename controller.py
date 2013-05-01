@@ -8,6 +8,7 @@ from signupVerifier.processors.initial_processor import importBatch,\
                     importPerson, addBatchChange, addPersonChange,\
                     sendVerificationEmails 
 from signupVerifier.processors.optout_processor import createOptOutToken
+from signupVerifier.models import Person
 from signupVerifier.settings import settings
 
 import logging
@@ -51,12 +52,32 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         for new_spreadsheet in new_spreadsheets:
 
             #  1.) Convert spreadsheets to batch_dict and person_dict (GClient)
-            meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
-            meta_dict = self.gclient.metaRowToDict(meta_list_feed[0])
-            person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
-            person_dicts = [self.gclient.personRowToDict(person_list_entry) for
-                            person_list_entry in person_list_feed if
-                            person_list_entry.get_value('email') is not None]
+            try:
+                meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
+                meta_dict = self.gclient.metaRowToDict(meta_list_feed[0])
+                person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
+                person_dicts = [self.gclient.personRowToDict(person_list_entry) 
+                    for person_list_entry in person_list_feed if
+                    person_list_entry.get_value('email') is not None or 
+                    person_list_entry.get_value('firstname') is not None or 
+                    person_list_entry.get_value('lastname') is not None or 
+                    person_list_entry.get_value('fullname') is not None]
+            except Exception as e:
+                # Something serious has happened. Need to piece together a
+                # batch_log for the tech guy
+                logging.error(e)
+                batch_log = new_batch_log({
+                            'staff_email': settings['username'],
+                            'event_name': 'ERROR',
+                            'event_date': 'ERROR'
+                            }, new_spreadsheet.FindHtmlLink())
+                batch_logs.append(batch_log)
+                batch_log['error'] = e
+                continue
+
+            batch_log = new_batch_log(meta_dict, 
+                                        new_spreadsheet.FindHtmlLink())
+            batch_logs.append(batch_log)
 
             # TODO See if this can be made a transaction
             # 2.) Import dicts into Batch and Person tables (InitialProcessor)  
@@ -64,8 +85,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # TODO add a step to validate the data of each person
             persons = []
             optout_tokens = dict()
-            batch_log = new_batch_log(meta_dict, 
-                                        new_spreadsheet.FindHtmlLink())
+            
             if 'prevbatch' in meta_dict:
                 try:
                     batch = addBatchChange(meta_dict, meta_dict['prevbatch'])
@@ -74,6 +94,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 except Exception as e:
                     # Go no futher with processing this batch
                     batch_log['error'] = e
+                    logging.error(e)
                     continue
 
                 for person_dict in person_dicts:
@@ -89,7 +110,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         optout_tokens[person.key()] = createOptOutToken(batch,
                                                                     person)
                     except Exception as e:
-                        new_batch_log['persons_fail'].append((person_dict, e))
+                        logging.error(e)
+                        batch_log['persons_fail'].append((person_dict, e))
             else:
                 try:
                     batch = importBatch(meta_dict)
@@ -98,6 +120,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 except Exception as e:
                     # Go no futher with processing this batch
                     batch_log['error'] = e
+                    logging.error(e)
                     continue
 
                 for person_dict in person_dicts:
@@ -107,18 +130,24 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         optout_tokens[person.key()] = createOptOutToken(batch,
                                                                         person)
                     except Exception as e:
-                        new_batch_log['persons_fail'].append((person_dict, e))
+                        logging.error(e)
+                        batch_log['persons_fail'].append((person_dict, e))
 
             # 4.) Generate and send Emails! 
             batch_log = sendVerificationEmails(batch, persons, optout_tokens, 
                                                 batch_log)
-            batch_logs.append(batch_log)
 
 
         # Process the batch_logs
         staff_templates = dict()
         for batch_log in batch_logs:
-            staff_email = batch_log['meta_dict']['staff_email']
+            if 'staff_email' not in batch_log['meta_dict']:
+                # Staff person forgot to include their email address. Tell the
+                # tech guy.
+                staff_email = settings['username']
+            else:
+                staff_email = batch_log['meta_dict']['staff_email']
+
             if not staff_email in staff_templates:
                staff_templates[staff_email] = {
                             'failed_batches' : [],
@@ -128,7 +157,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             if batch_log['error']:
                 template_values['failed_batches'].append(
-                            {'url': batch_log.spreadsheet_url,
+                            {'url': batch_log['spreadsheet_url'],
                              'event_name': batch_log['meta_dict']['event_name'],
                              'event_date': batch_log['meta_dict']['event_date'],
                              'error': batch_log['error']})
@@ -144,7 +173,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         'email' : person.email,
                         'full_name' : person.full_name
                     })
-                for error, person in batch_log['persons_fail']:
+                for person, error in batch_log['persons_fail']:
                     if isinstance(person, Person):
                         email = person.email
                         full_name = person.full_name
@@ -156,6 +185,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         'full_name': full_name,
                         'error': error
                     })
+
                 template_values['successful_batches'].append(successful_batch)
 
         retval = ''
