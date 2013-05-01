@@ -50,6 +50,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # TODO See if this can be made a transaction
             # 2.) Import dicts into Batch and Person tables (InitialProcessor)  
             #       table (InitialProcessor & here)
+            # TODO add a step to validate the data of each person
             if 'prev_batch' in meta_dict:
                 batch = addBatchChange(meta_dict, meta_dict['prev_batch'])
                 batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
