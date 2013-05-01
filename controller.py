@@ -9,6 +9,7 @@ from signupVerifier.processors.initial_processor import importBatch,\
 from signupVerifier.processors.optout_processor import createOptOutToken
 
 import logging
+log_template = 'log_template.html'
 
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
@@ -113,6 +114,50 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
 
         # Process the batch_logs
+        staff_templates = dict()
+        for batch_log in batch_logs:
+            staff_email = batch_log['meta_dict']['staff_email']
+            if not staff_email in staff_templates:
+               staff_templates[staff_email] = {
+                            'failed_batches' : []
+                            'successful_batches': []
+                        }
+            template_values = staff_templates[staff_email]
+
+            if batch_log.error:
+                template_values['failed_batches'].append(
+                            {'url': batch_log.spreadsheet_url,
+                             'event_name': batch_log['meta_dict']['event_name'],
+                             'event_date': batch_log['meta_dict']['event_date'],
+                             'error': batch_log['error']})
+            else:
+                successful_batch = {
+                    'url': batch_log.spreadsheet_url,
+                    'event_name': batch_log['meta_dict']['event_name'],
+                    'event_date': batch_log['meta_dict']['event_date'],
+                    'successful_persons' : [],
+                    'failed_persons': []}
+                for person in batch_log['persons_success']:
+                    successful_batch['successful_persons'].append({
+                        'email' : person.email,
+                        'full_name' : person.full_name
+                    })
+                for error, person in batch_log['persons_fail']:
+                    if isinstance(person, Person):
+                        email = person.email
+                        full_name = person.full_name
+                    else:
+                        email = person['email']
+                        full_name = person['full_name']
+                    successful_batch['failed_persons'].append({
+                        'email' : email,
+                        'full_name': full_name,
+                        'error': error
+                    })
+
+        retval = ''
+        for template_values in staff_templates:
+            retval += template.render(log_template, template_values)
         self.response.headers['Content-Type'] = 'text/plain'
         self.response.write(retval)
 
