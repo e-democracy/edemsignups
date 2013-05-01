@@ -34,8 +34,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         signups_folder = self.gclient.docsClient.GetResourceById(
                                                 settings['signups_folder_id')
         spreadsheets = self.gclient.spreadsheets(signups_folder)
-        #   2.) Discard from list all spreadsheets already in Spreadsheet table
-        #       (GSClient)
+        #   2.) Discard from that list all spreadsheets already processed
         new_spreadsheets = self.gclient.filterOutOldSpreadsheets(spreadsheets)
         #   3.) For all remaining spreadsheets, 
         for new_spreadsheet in new_spreadsheets:
@@ -49,37 +48,36 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             # TODO See if this can be made a transaction
             # 2.) Import dicts into Batch and Person tables (InitialProcessor)  
-            #       table (InitialProcessor & here)
+            # 3.) And create OptOutTokens
             # TODO add a step to validate the data of each person
+            persons = []
+            optout_tokens = dict()
             if 'prev_batch' in meta_dict:
                 batch = addBatchChange(meta_dict, meta_dict['prev_batch'])
                 batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
                                         new_spreadsheet)
-                persons = []
                 for person_dict in person_dicts:
                     if 'person_id' in person_dict:
                         person_dict['source_batch'] = batch.key()
-                        persons.append(addPersonChange(person_dict, 
-                                        person_dict['person_id']))
+                        person = addPersonChange(person_dict, 
+                                    person_dict['person_id'])
                     else:
-                        persons.append(importPerson(person_dict, batch))
+                        person = importPerson(person_dict, batch)
+
+                    persons.append(person)
+                    optout_tokens[person.key()] = createOptOutToken(batch,
+                                                                    person)
             else:
                 batch = importBatch(meta_dict)
                 batchSpreadsheet = self.gclient.importBatchSpreadsheet(batch,
                                         new_spreadsheet)
-                persons = [importPerson(person_dict, batch) for person_dict in
-                        person_dicts]
-
-            #5.) For each Person with source_bid == current 
-            for person in persons:
-                # 1.) Generate/Save Opt-Out Token (OptOutProcessor)
-                token = createOptOutToken(batch, person)
-                # 2.) Generate Email based on Opt-Out Token, Spreadsheet, and 
-                # Person (InitialProcessor)
-
+                for person_dict in person_dicts:
+                    person = importPerson(person_dict, batch)
+                    persons.append(person)
+                    optout_tokens[person.key()] = createOptOutToken(batch,
+                                                                    person)
+            # 4.) Generate and send Emails! 
             sendVerificationEmails(batch)
-
-                #       3.) Send Email (Initial Processor)
 
         # This is a bit confusing, because the Spreadsheets Client does not 
         # directly support searching for a folder. So, a Docs Client is first
