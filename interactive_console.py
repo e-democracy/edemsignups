@@ -34,7 +34,8 @@ for new_ss in new_sss:
         persons = [importPerson(person_dict, batch) for person_dict in person_dicts]
         print "New Batch imported"
     print "Creating Tokens"
+    optout_tokens = dict()
     for person in persons:
-        token = createOptOutToken(batch, person)
+        optout_tokens[person.key()] = createOptOutToken(batch, person)
     print "Sending Emails"
-    sendVerificationEmails(batch)
+    sendVerificationEmails(batch, persons, optout_tokens)
