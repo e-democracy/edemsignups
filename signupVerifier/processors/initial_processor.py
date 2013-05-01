@@ -184,7 +184,7 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
             for person in persons:
                 optout_token[person.key()] = person.optout_tokens.filter(
                                             'batch =', batch).get()
-    except Error as e:
+    except Exception as e:
         if batch_log:
             batch_log['error'] = e
             return batch_log
@@ -210,7 +210,7 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
                         email_body)
             if batch_log:
                 batch_log['persons_success'].append(person)
-        except Error as e:
+        except Exception as e:
             if batch_log:
                 batch_log['persons_fail'].append((person, e))
             else:

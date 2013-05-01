@@ -71,7 +71,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     batch = addBatchChange(meta_dict, meta_dict['prevbatch'])
                     batchSpreadsheet = self.gclient.importBatchSpreadsheet(
                                                         batch,new_spreadsheet)
-                except Error as e:
+                except Exception as e:
                     # Go no futher with processing this batch
                     batch_log['error'] = e
                     continue
@@ -88,14 +88,14 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         persons.append(person)
                         optout_tokens[person.key()] = createOptOutToken(batch,
                                                                     person)
-                    except Error as e:
+                    except Exception as e:
                         new_batch_log['persons_fail'].append((person_dict, e))
             else:
                 try:
                     batch = importBatch(meta_dict)
                     batchSpreadsheet = self.gclient.importBatchSpreadsheet(
                                                         batch, new_spreadsheet)
-                except Error as e:
+                except Exception as e:
                     # Go no futher with processing this batch
                     batch_log['error'] = e
                     continue
@@ -106,7 +106,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         persons.append(person)
                         optout_tokens[person.key()] = createOptOutToken(batch,
                                                                         person)
-                    except Error as e:
+                    except Exception as e:
                         new_batch_log['persons_fail'].append((person_dict, e))
 
             # 4.) Generate and send Emails! 

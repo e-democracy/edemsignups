@@ -2,6 +2,8 @@
   <body>
     Hello,
 
+    <p>The E-Democracy Signup Verifier has processed a set of new signups that include signups you submitted.</p>
+
     {% if failed_batches %}
     The following batches encountered errors while processing their metadata. People in these batches where not emailed.
     <ul>
@@ -19,7 +21,7 @@
           <p>The following addresses were emailed (this does not mean they are verified, they may still bounce or opt out):</p>
           <ul>
             {% for successful_person in successful_batch.successful_persons %}
-              <li>{{ successful_person.email }} ({{ successful_person.full_name }})</li>
+              <li>{{ successful_person.email }} - {{ successful_person.full_name }}</li>
             {% endfor %}
           </ul>
         {% endif %}
@@ -27,7 +29,7 @@
           <p>The following addresses were not emailed due to an error:</p>
           <ul>
           {% for failed_person in successful_batch.failed_persons %}
-            <li> {{ failed_person.email }} ({{ failed_person.full_name }})
+            <li> {{ failed_person.email }} - {{ failed_person.full_name }}
               <ul><li>{{ failed_person.error }}</li></ul>
             </li>
           {% endfor %}
