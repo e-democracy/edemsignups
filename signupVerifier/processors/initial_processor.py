@@ -142,7 +142,8 @@ def importPersons(persons, batch):
     person_records = [importPerson(person, batch) for person in persons]
     return person_records   
 
-def sendVerificationEmails(batch, persons=None, optout_tokens=None):
+def sendVerificationEmails(batch, persons=None, optout_tokens=None,
+                            batch_log=None):
     """ 
     Generates an email based on the metadata of the provided batch, each 
     person in the batch, and each person's opt-out token. Then sends the 
@@ -160,42 +161,59 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None):
                 provided Person list will be used to find OptOutToken models,
                 but may not be successful if OptOutToken models were recently
                 saved.
-    Output: True if verification emails are sent successfully, false
-            otherwise.
+            batch_log - option batch_log data structure. Must have
+                persons_success and persons_fail list attributes. If no log is
+                provided, then no logging will occur.
+    Output: a modified batch_log if batch_log is provided. Otherwise,  True if 
+            verification emails are sent successfully, False otherwise.
     Side Effect: Emails are sent to all Person associated with the Batch
                     model.
+    Throws: If batch_log is not provided, any encountered exceptions will
+            bubble up.
     """
     batch = Batch.verifyOrGet(batch)
 
-    if persons is None:
-        # Can probably use run, except for wanting to check length below for
-        # debugging
-        persons = batch.persons.fetch(limit=None)
+    try:
+        if persons is None:
+            # Can probably use run, except for wanting to possible generate
+            # optout_tokens and then re-iterate 
+            persons = batch.persons.fetch(limit=None)
 
-    if optout_tokens is None:
-        optout_tokens = dict()
-        for person in persons:
-            optout_token[person.key()] = person.optout_tokens.filter('batch =', 
-                                            batch).get()
-
-    print "Persons in this batch: %d" % len(persons)
+        if optout_tokens is None:
+            optout_tokens = dict()
+            for person in persons:
+                optout_token[person.key()] = person.optout_tokens.filter(
+                                            'batch =', batch).get()
+    except Error as e:
+        if batch_log:
+            batch_log['error'] = e
+            return batch_log
+        else:
+            raise e
 
     for person in persons:
-        print "Sending an email to %s" % person.full_name
-        optout_token = optout_tokens[person.key()] 
-        template_values = {
-            'first_name': person.first_name,
-            'last_name': person.last_name,
-            'full_name': person.full_name,
-            'email': person.email,
-            'optout_token': optout_token.key()
-        }
+        try:
+            optout_token = optout_tokens[person.key()] 
+            template_values = {
+                'first_name': person.first_name,
+                'last_name': person.last_name,
+                'full_name': person.full_name,
+                'email': person.email,
+                'optout_token': optout_token.key()
+            }
 
-        email_body = template.render(verification_email_template_path,
+            email_body = template.render(verification_email_template_path,
                                     template_values)
-        mail.send_mail(settings['email_as'],
+            mail.send_mail(settings['email_as'],
                         template_values['email'],
                         settings['verification_subject'],
                         email_body)
+            if batch_log:
+                batch_log['persons_success'].append(person)
+        except Error as e:
+            if batch_log:
+                batch_log['persons_fail'].append((person, e))
+            else:
+                raise e
 
-    return True
+    return batch_log if batch_log else True

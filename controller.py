@@ -70,7 +70,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                                         batch,new_spreadsheet)
                 except Error as e:
                     # Go no futher with processing this batch
-                    batch_log.error = e
+                    batch_log['error'] = e
                     continue
 
                 for person_dict in person_dicts:
@@ -86,7 +86,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         optout_tokens[person.key()] = createOptOutToken(batch,
                                                                     person)
                     except Error as e:
-                        new_batch_log.persons_fail.append((person_dict, e))
+                        new_batch_log['persons_fail'].append((person_dict, e))
             else:
                 try:
                     batch = importBatch(meta_dict)
@@ -94,7 +94,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                                         batch, new_spreadsheet)
                 except Error as e:
                     # Go no futher with processing this batch
-                    batch_log.error = e
+                    batch_log['error'] = e
                     continue
 
                 for person_dict in person_dicts:
@@ -104,7 +104,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         optout_tokens[person.key()] = createOptOutToken(batch,
                                                                         person)
                     except Error as e:
-                        new_batch_log.persons_fail.append((person_dict, e))
+                        new_batch_log['persons_fail'].append((person_dict, e))
+
             # 4.) Generate and send Emails! 
             batch_log = sendVerificationEmails(batch, persons, optout_tokens, 
                                                 log=batch_log)
