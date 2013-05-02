@@ -51,14 +51,26 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         # 3.) Process the remaining spreadsheets
         for new_spreadsheet in new_spreadsheets:
 
-            #  1.) Convert spreadsheets meta info to batch_dict
             try:
+                #  1.) Convert spreadsheets meta info to batch_dict
                 meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
                 meta_dict = self.gclient.metaRowToDict(meta_list_feed[0])
+                
+                # 2.) Import meta_dict into Batch table  
+                if 'prev_batch' in meta_dict:
+                    batch = addBatchChange(meta_dict, meta_dict['prev_batch'])
+                    meta_dict = batch.asDict()
+                    batchSpreadsheet = self.gclient.importBatchSpreadsheet(
+                                                        batch, new_spreadsheet)
+                else:
+                    batch = importBatch(meta_dict)
+
+                    batchSpreadsheet = self.gclient.importBatchSpreadsheet(
+                                                        batch, new_spreadsheet)
             except Exception as e:
                 # Something serious has happened. Need to piece together a
                 # batch_log for the tech guy
-                logging.error(e)
+                logging.exception(e)
                 batch_log = new_batch_log({
                             'staff_email': settings['username'],
                             'event_name': 'ERROR',
@@ -71,22 +83,6 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # Create a batch log for the new batch
             batch_log = new_batch_log(meta_dict,new_spreadsheet.FindHtmlLink())
             batch_logs.append(batch_log)
-
-            # TODO See if this can be made a transaction
-            # 2.) Import meta_dict into Batch table  
-            try:
-                if 'prevbatch' in meta_dict:
-                    batch = addBatchChange(meta_dict, meta_dict['prevbatch'])
-                else:
-                    batch = importBatch(meta_dict)
-
-                    batchSpreadsheet = self.gclient.importBatchSpreadsheet(
-                                                        batch,new_spreadsheet)
-            except Exception as e:
-                # Go no futher with processing this batch
-                batch_log['error'] = e
-                logging.error(e)
-                continue
 
             # 3.) Convert and import persons and create OptOutTokens
             person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
@@ -125,10 +121,10 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
                 person_dict = self.gclient.personRowToDict(person_list_entry)
                 try:
-                    if 'personid' in person_dict:
+                    if 'person_id' in person_dict:
                         person_dict['source_batch'] = batch.key()
                         person = addPersonChange(person_dict, 
-                                                       person_dict['personid'])
+                                                    person_dict['person_id'])
                     else:
                         person = importPerson(person_dict, batch)
 
@@ -136,7 +132,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     optout_tokens[person.key()] = createOptOutToken(batch,
                                                                     person)
                 except Exception as e:
-                    logging.error(e)
+                    logging.exception(e)
                     batch_log['persons_fail'].append((person_dict, e))
             
             # 4.) Generate and send Emails! 

@@ -2,6 +2,14 @@
 
 from google.appengine.ext import db
 
+def asDict(cls, instance):
+    """ Returns the instance of a Model as a dict"""
+    model_dict = {}
+    for prop in cls.properties():
+        model_dict[prop] = getattr(instance, prop)
+
+    return model_dict
+
 class Batch(db.Model):
     """ Represents a batch of sign-ups gathered at a particular event and
     entered by a particular staff person."""
@@ -11,6 +19,9 @@ class Batch(db.Model):
     event_date = db.DateProperty()
     event_location = db.StringProperty()
     created = db.DateTimeProperty(required = True, auto_now_add = True)
+
+    def asDict(self):
+        return asDict(Batch, self)
 
     @classmethod
     def verifyOrGet(cls, batch):
@@ -75,14 +86,9 @@ class Person(db.Model):
     yrly_income = db.IntegerProperty()
     source_batch = db.ReferenceProperty(Batch, collection_name = 'persons', 
                                         required = True)
-
     def asDict(self):
         """ Returns the instance of Person as a dict"""
-        person_dict = {}
-        for prop in db.Model.properties(Person):
-            person_dict[prop] = getattr(self, prop)
-
-        return person_dict
+        return asDict(Batch, self)
 
     @classmethod
     def verifyOrGet(cls, person):
