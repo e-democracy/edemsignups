@@ -51,6 +51,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         # 3.) Process the remaining spreadsheets
         for new_spreadsheet in new_spreadsheets:
 
+            batch = None
+            batchSpreadsheet = None
             try:
                 #  1.) Convert spreadsheets meta info to batch_dict
                 meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
@@ -69,7 +71,12 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                                         batch, new_spreadsheet)
             except Exception as e:
                 # Something serious has happened. Need to piece together a
-                # batch_log for the tech guy
+                # batch_log for the tech guy and undo any changes to the DB
+                if batch and batch.is_saved():
+                    batch.delete()
+                if batchSpreadsheet and batchSpreadsheet.is_saved():
+                    batchSpreadsheet.delete()
+
                 logging.exception(e)
                 batch_log = new_batch_log({
                             'staff_email': settings['username'],
