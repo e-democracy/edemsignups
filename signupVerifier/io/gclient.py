@@ -528,21 +528,26 @@ class GClient(object):
         """
         retval = [] 
         # Validate email address
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", r.get_value('email')):
+        if not r.get_value('email') or not r.get_value('email').strip():
+            retval.append('Missing email address')
+        elif not re.match(r"[^@]+@[^@]+\.[^@]+", r.get_value('email')):
             retval.append('Malformed email address')
         # Validate first, last, and full names
-        if r.get_value('firstname').strip() is None:
+        if (not r.get_value('firstname') or
+                not r.get_value('firstname').strip()):
             retval.append('Missing first name')
-        if r.get_value('lastname').string() is None:
-            retval.append('Missing last name'):
-        if r.get_value('fullname') is None:
+        if (not r.get_value('lastname') or 
+                not r.get_value('lastname').strip()):
+            retval.append('Missing last name')
+        if (r.get_value('fullname') is None or 
+                not r.get_value('fullname').strip()):
             retval.append('Missing full name')
         # Validate at least one forum is selected
         # Easiest to convert to dict and look for special keys
         d = self.rowToDict(r)
         forum_keys = [key for key in d.keys() if (key.startswith('_') or
                         key.isdigit()) and d[key] is not None] 
-        if len(forum_keys) == 0:
+        if not forum_keys:
             retval.append('No forums selected for the user')
 
         return retval

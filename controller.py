@@ -94,13 +94,21 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             persons = []
             optout_tokens = dict()
             for person_list_entry in person_list_feed:
-                # Because of how Google Spreadsheet handles the forum columns,
-                # which present drop downs, the API will produce rows that do
-                # not actually have data. Skip those.
-                if person_list_entry.get_value('email') is None and 
-                    person_list_entry.get_value('firstname') is None and 
-                    person_list_entry.get_value('lastname') is  None and 
-                    person_list_entry.get_value('fullname') is None:
+                # Because of how the Full Name column is a formula output that
+                # always includes an empty space, we need to first check that
+                # several values exist to be sure that the row is actually data
+                # entered by a user.
+
+                if ((person_list_entry.get_value('email') is None or
+                     not person_list_entry.get_value('email').strip()) and 
+                    (person_list_entry.get_value('firstname') is None or 
+                     not person_list_entry.get_value('firstname').strip()) 
+                    and 
+                    (person_list_entry.get_value('lastname') is None or
+                     not person_list_entry.get_value('lastname').strip())
+                    and 
+                    (person_list_entry.get_value('fullname') is None or
+                     not person_list_entry.get_value('fullname').strip())):
                     continue
 
                 # Make sure we have some level of valid data
@@ -113,6 +121,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         {'email':person_list_entry.get_value('email'),
                          'full_name':person_list_entry.get_value('fullname')
                         }, '; '.join(validation_errors)))
+                    continue
 
                 person_dict = self.gclient.personRowToDict(person_list_entry)
                 try:
@@ -186,9 +195,6 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 template_values['successful_batches'].append(successful_batch)
 
         retval = ''
-        import pprint
-        pp = pprint.PrettyPrinter()
-        pp.pprint(staff_templates)
         for email, template_values in staff_templates.iteritems():
             retval += template.render(log_template, template_values)
         self.response.headers['Content-Type'] = 'text/html'
