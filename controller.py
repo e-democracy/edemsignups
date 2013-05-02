@@ -51,17 +51,10 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         # 3.) Process the remaining spreadsheets
         for new_spreadsheet in new_spreadsheets:
 
-            #  1.) Convert spreadsheets to batch_dict and person_dict (GClient)
+            #  1.) Convert spreadsheets meta info to batch_dict
             try:
                 meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
                 meta_dict = self.gclient.metaRowToDict(meta_list_feed[0])
-                person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
-                person_dicts = [self.gclient.personRowToDict(person_list_entry) 
-                    for person_list_entry in person_list_feed if
-                    person_list_entry.get_value('email') is not None or 
-                    person_list_entry.get_value('firstname') is not None or 
-                    person_list_entry.get_value('lastname') is not None or 
-                    person_list_entry.get_value('fullname') is not None]
             except Exception as e:
                 # Something serious has happened. Need to piece together a
                 # batch_log for the tech guy
@@ -75,64 +68,68 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 batch_log['error'] = e
                 continue
 
-            batch_log = new_batch_log(meta_dict, 
-                                        new_spreadsheet.FindHtmlLink())
+            # Create a batch log for the new batch
+            batch_log = new_batch_log(meta_dict,new_spreadsheet.FindHtmlLink())
             batch_logs.append(batch_log)
 
             # TODO See if this can be made a transaction
-            # 2.) Import dicts into Batch and Person tables (InitialProcessor)  
-            # 3.) And create OptOutTokens
-            # TODO add a step to validate the data of each person
-            persons = []
-            optout_tokens = dict()
-            
-            if 'prevbatch' in meta_dict:
-                try:
+            # 2.) Import meta_dict into Batch table  
+            try:
+                if 'prevbatch' in meta_dict:
                     batch = addBatchChange(meta_dict, meta_dict['prevbatch'])
+                else:
+                    batch = importBatch(meta_dict)
+
                     batchSpreadsheet = self.gclient.importBatchSpreadsheet(
                                                         batch,new_spreadsheet)
-                except Exception as e:
-                    # Go no futher with processing this batch
-                    batch_log['error'] = e
-                    logging.error(e)
+            except Exception as e:
+                # Go no futher with processing this batch
+                batch_log['error'] = e
+                logging.error(e)
+                continue
+
+            # 3.) Convert and import persons and create OptOutTokens
+            person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
+
+            persons = []
+            optout_tokens = dict()
+            for person_list_entry in person_list_feed:
+                # Because of how Google Spreadsheet handles the forum columns,
+                # which present drop downs, the API will produce rows that do
+                # not actually have data. Skip those.
+                if person_list_entry.get_value('email') is None and 
+                    person_list_entry.get_value('firstname') is None and 
+                    person_list_entry.get_value('lastname') is  None and 
+                    person_list_entry.get_value('fullname') is None:
                     continue
 
-                for person_dict in person_dicts:
-                    try:
-                        if 'personid' in person_dict:
-                            person_dict['source_batch'] = batch.key()
-                            person = addPersonChange(person_dict, 
-                                                    person_dict['personid'])
-                        else:
-                            person = importPerson(person_dict, batch)
+                # Make sure we have some level of valid data
+                validation_errors = self.gclient.invalidPersonRow(
+                                                            person_list_entry)
+                if validation_errors:
+                    # Need to patch together a dict on an error.
+                    # Blug, this is ugly
+                    batch_log['persons_fail'].append((
+                        {'email':person_list_entry.get_value('email'),
+                         'full_name':person_list_entry.get_value('fullname')
+                        }, '; '.join(validation_errors)))
 
-                        persons.append(person)
-                        optout_tokens[person.key()] = createOptOutToken(batch,
-                                                                    person)
-                    except Exception as e:
-                        logging.error(e)
-                        batch_log['persons_fail'].append((person_dict, e))
-            else:
+                person_dict = self.gclient.personRowToDict(person_list_entry)
                 try:
-                    batch = importBatch(meta_dict)
-                    batchSpreadsheet = self.gclient.importBatchSpreadsheet(
-                                                        batch, new_spreadsheet)
-                except Exception as e:
-                    # Go no futher with processing this batch
-                    batch_log['error'] = e
-                    logging.error(e)
-                    continue
-
-                for person_dict in person_dicts:
-                    try:
+                    if 'personid' in person_dict:
+                        person_dict['source_batch'] = batch.key()
+                        person = addPersonChange(person_dict, 
+                                                       person_dict['personid'])
+                    else:
                         person = importPerson(person_dict, batch)
-                        persons.append(person)
-                        optout_tokens[person.key()] = createOptOutToken(batch,
-                                                                        person)
-                    except Exception as e:
-                        logging.error(e)
-                        batch_log['persons_fail'].append((person_dict, e))
 
+                    persons.append(person)
+                    optout_tokens[person.key()] = createOptOutToken(batch,
+                                                                    person)
+                except Exception as e:
+                    logging.error(e)
+                    batch_log['persons_fail'].append((person_dict, e))
+            
             # 4.) Generate and send Emails! 
             batch_log = sendVerificationEmails(batch, persons, optout_tokens, 
                                                 batch_log)

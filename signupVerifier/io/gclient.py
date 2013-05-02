@@ -1,5 +1,6 @@
 # coding=utf-8
 import datetime
+import re
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.docs.data import Resource
 from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery
@@ -510,6 +511,41 @@ class GClient(object):
         for folder in folders:
             for spreadsheet in self.spreadsheets(folder):
                 yield spreadsheet
+
+    ####################
+    # Validation Methods
+    ####################
+
+    def invalidPersonRow(self,r):
+        """
+            Checks that the provided list row contains at least the minimum,
+            well formed forms needed to represent a person.
+
+            Input: r - a ListRow
+            Output: A list of validation errors. If the list row is valid, the
+                list will be empty. Otherwise, it will contain one entry per
+                validation error.
+        """
+        retval = [] 
+        # Validate email address
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", r.get_value('email')):
+            retval.append('Malformed email address')
+        # Validate first, last, and full names
+        if r.get_value('firstname').strip() is None:
+            retval.append('Missing first name')
+        if r.get_value('lastname').string() is None:
+            retval.append('Missing last name'):
+        if r.get_value('fullname') is None:
+            retval.append('Missing full name')
+        # Validate at least one forum is selected
+        # Easiest to convert to dict and look for special keys
+        d = self.rowToDict(r)
+        forum_keys = [key for key in d.keys() if (key.startswith('_') or
+                        key.isdigit()) and d[key] is not None] 
+        if len(forum_keys) == 0:
+            retval.append('No forums selected for the user')
+
+        return retval
 
     ####################################
     # Spreadsheet specific db functions
