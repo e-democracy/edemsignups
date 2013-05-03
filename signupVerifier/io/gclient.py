@@ -3,9 +3,10 @@ import datetime
 import re
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.docs.data import Resource
-from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery
+from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery,\
+                                        CellQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
-					ListsFeed, ListEntry
+					ListsFeed, ListEntry, BuildBatchCellsUpdate
 from ..settings import settings
 from ..models import Batch, BatchSpreadsheet
 
@@ -264,6 +265,34 @@ class GClient(object):
         """
         return self.getListFeed(spreadsheet, settings['raw_sheet_title'])
 
+    def deleteFirstRow(self, gsid, wsid):
+        """
+        Deletes the first row in the spreadsheet and worksheet associated with
+        ogsid and wsid.
+
+        Input:  gsid - ID of the Google Spreadsheet to modify
+                wsid - ID of the worksheet to modify
+        Output: True
+        """
+        # Deleting the first row actually involves:
+        # 1.) Overwriting the values of the first row with those of the second
+        #first_row = self.spreadsheetsClient.GetCells(gsid, wsid, 
+        #                                            q=CellQuery(1, 1)).entry
+        second_row = self.spreadsheetsClient.GetCells(gsid, wsid, 
+                                                    q=CellQuery(2, 2)).entry
+        first_row_update = BuildBatchCellsUpdate(gsid, wsid)
+        for i, cell in enumerate(second_row):
+            first_row_update.AddSetCell(1, i+1, cell.content.text)
+
+        self.spreadsheetsClient.batch(first_row_update, force=True)
+
+        # 2.) Deleting the second row
+        rows = self.spreadsheetsClient.GetListFeed(gsid, wsid).entry
+        second_row = rows[0] # Think about that for a second
+        self.spreadsheetsClient.Delete(second_row)
+
+        return True
+
 
     def cloneRawSheet(self, new_spreadsheet_id, orig_spreadsheet_id, 
                         headers_to_add):
@@ -319,10 +348,12 @@ class GClient(object):
             new_raw_headers_update.AddSetCell(1, i+1, cell.content.text)
 
         for j, cell in enumerate(headers_to_add):
-            new_raw_headers_update.AddSetCell(1, i+j, cell)
+            new_raw_headers_update.AddSetCell(1, i+j+2, cell)
         self.spreadsheetsClient.batch(new_raw_headers_update, force=True)
 
         return result
+
+
 
     def cloneSpreadsheetForFailure(self, ogsid, batch_id, 
                                     suffix = None, headers_to_add = []):
@@ -350,7 +381,7 @@ class GClient(object):
         original_spreadsheet = self.docsClient.GetResourceById(ogsid)
 
         # Get Failed Signups folder
-        failed_signups_folder = self.docsClient.GetResouceById(
+        failed_signups_folder = self.docsClient.GetResourceById(
                                         settings['failed_signups_folder_id'])
 
         # Create a new Spreadsheet in Failed Signups folder
@@ -361,19 +392,55 @@ class GClient(object):
                                         collection=failed_signups_folder)
         ngsid = spreadsheet_id(new_spreadsheet)
 
-        # Create and populate the Meta sheet
-        result = self.spreadsheetsClient.AddWorksheet(spreadsheet_id, 
-                                settings['raw_sheet_title'], 50, 1)
-        header_cell = self.spreadsheetsClient.GetCell(ngsid, 1, 1)
-        header_cell.cell.input_value = 'prev_batch'
+        # Turn the default blank sheet into the Meta sheet
+        new_meta_sheet = self.spreadsheetsClient.GetWorksheets(ngsid,
+                            q=WorksheetQuery(title='Sheet 1')).entry[0]
+        new_meta_sheet.title.text = settings['meta_sheet_title']
+        self.spreadsheetsClient.Update(new_meta_sheet)
+
+        nmsid = worksheet_id(new_meta_sheet)
+        header_cell = self.spreadsheetsClient.GetCell(ngsid, nmsid, 1, 1)
+        header_cell.cell.input_value = 'prevbatch'
         result = self.spreadsheetsClient.update(header_cell)
-        prev_batch_cell = self.spreadsheetsClient.GetCell(ngsid, 2, 1)
+        prev_batch_cell = self.spreadsheetsClient.GetCell(ngsid, nmsid, 2, 1)
         prev_batch_cell.cell.input_value = batch_id
         result = self.spreadsheetsClient.update(prev_batch_cell)
 
         # Create the cloned Raw sheet 
         new_raw_sheet = self.cloneRawSheet(ngsid, ogsid, headers_to_add)
-        nbsid = workdsheet_id(new_raw_sheet)
+
+        return (new_spreadsheet, new_raw_sheet)
+
+    def createValidationErrorsSpreadsheet(self, batch):
+        """
+        Creates a new Google Spreadsheet to store the rows from the provided
+        Batch instance that had validation errors.
+
+        The created Spreadsheet will have a meta sheet with just one attribute
+        (id of the provided Batch). It will also have a people sheet with
+        headers identical to the headers of the spreadsheet associated with
+        batch. Unlike the other create*Spreadsheet methods, this method does
+        not insert the data of any persons. This is instead left up to the
+        caller.
+
+        Input:  batch - a Batch instance to create an opt-out spreadsheet for.
+        Output: A tuple with a Spreadsheet instance for the newly created
+            spreadsheet, and a Worksheet for the new spreadsheet's Raw sheet.
+        Side Effect: A new spreadsheet will be created on Google Drive, in a
+            folder specified by the failed_spreadsheets_folder attribute of 
+            settings.
+        """
+        batch = Batch.verifyOrGet(batch)
+        ogs = batch.spreadsheets.get()
+        if not ogs:
+            raise LookupError('Provided batch does not have a Google' + \
+                                'Spreadsheet associated with it.')
+
+        ogsid = ogs.gsid
+        batch_id = str(batch.key())
+        
+        (new_spreadsheet, new_raw_sheet) = self.cloneSpreadsheetForFailure(
+                                        ogsid, batch_id, " - Validation Errors")
 
         return (new_spreadsheet, new_raw_sheet)
 
@@ -389,27 +456,28 @@ class GClient(object):
         ID number, a time at which the bounce was detected, and the bounce
         message.
 
-        Input:  batch - a Batch instance to create a bounced spreadsheet for.
-        Output: A Spreadsheet instance that allows access to the created Google
-                Spreadsheet.
+        Input:  batch - a Batch instance or key of a Batch instance  to create 
+                        a bounced spreadsheet for.
+        Output:A tuple with a Spreadsheet instance for the newly created
+            spreadsheet, and a Worksheet for the new spreadsheet's Raw sheet.
         Side Effect: A new spreadsheet will be created on Google Drive, in a
             folder specified by the failed_spreadsheets_folder attribute of 
             settings.
         """
-        if not isinstance(batch, Batch):
-            raise TypeError('batch must be a Batch instance')
-        if not hasattr(batch, 'spreadsheets') or \
-                len(batch.spreadsheets.get()) == 0:
+        batch = Batch.verifyOrGet(batch)
+        ogs = batch.spreadsheets.get()
+        if not ogs:
             raise LookupError('Provided batch does not have a Google' + \
                                 'Spreadsheet associated with it.')
 
-        ogsid = batch.spreadsheets.get.gsid
-        batch_id = batch.key()
+        ogsid = ogs.gsid
+        batch_id = str(batch.key())
+        print "key: %s" % batch_id 
 
         
         headers_to_add = ['Bounce Time', 'Bounce Message', 'Person ID']
-        (new_spreadsheet, new_raw_sheet) = cloneSpreadsheetForFailure(ogsid, 
-                                                batch_id, " - Bounced", 
+        (new_spreadsheet, new_raw_sheet) = self.cloneSpreadsheetForFailure(
+                                            ogsid, batch_id, " - Bounced", 
                                                 headers_to_add)
         ngsid = spreadsheet_id(new_spreadsheet)
         nbsid = worksheet_id(new_raw_sheet)
@@ -428,6 +496,8 @@ class GClient(object):
             bounce_row = self.personDictToRow(bounce_dict)
             self.spreadsheetsClient.AddListEntry(bounce_row, ngsid, nbsid)
 
+        return (new_spreadsheet, new_raw_sheet)
+
 
 
     def createOptOutSpreadsheet(self, batch):
@@ -441,25 +511,24 @@ class GClient(object):
         ID number and a reason given for opting out.
 
         Input:  batch - a Batch instance to create an opt-out spreadsheet for.
-        Output: A Spreadsheet instance that allows access to the created Google
-                Spreadsheet.
+        Output: A tuple with a Spreadsheet instance for the newly created
+            spreadsheet, and a Worksheet for the new spreadsheet's Raw sheet.
         Side Effect: A new spreadsheet will be created on Google Drive, in a
             folder specified by the failed_spreadsheets_folder attribute of 
             settings.
         """
-        if not isinstance(batch, Batch):
-            raise TypeError('batch must be a Batch instance')
-        if not hasattr(batch, 'spreadsheets') or \
-                len(batch.spreadsheets.get()) == 0:
+        batch = Batch.verifyOrGet(batch)
+        ogs = batch.spreadsheets.get()
+        if not ogs:
             raise LookupError('Provided batch does not have a Google' + \
                                 'Spreadsheet associated with it.')
 
-        ogsid = batch.spreadsheets.get.gsid
-        batch_id = batch.key()
+        ogsid = ogs.gsid
+        batch_id = str(batch.key())
         
         headers_to_add = ['OptOut Time', 'OptOut Message', 'Person ID']
-        (new_spreadsheet, new_raw_sheet) = cloneSpreadsheetForFailure(ogsid, 
-                                                batch_id, " - OptOuts", 
+        (new_spreadsheet, new_raw_sheet) = self.cloneSpreadsheetForFailure(
+                                            ogsid, batch_id, " - OptOuts", 
                                                 headers_to_add)
         ngsid = spreadsheet_id(new_spreadsheet)
         nbsid = worksheet_id(new_raw_sheet)
@@ -477,6 +546,8 @@ class GClient(object):
 
             optout_row = self.personDictToRow(optout_dict)
             self.spreadsheetsClient.AddListEntry(optout_row, ngsid, nbsid)
+
+        return (new_spreadsheet, new_raw_sheet)
 
 
     def spreadsheets(self, folder, query=None):
