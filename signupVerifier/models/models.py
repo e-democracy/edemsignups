@@ -73,6 +73,7 @@ class Person(db.Model):
     zip_code = db.StringProperty()
     phone = db.PhoneNumberProperty()
     forums = db.StringListProperty()
+    notes = db.StringProperty()
     # Demographics
     stated_race = db.StringProperty()
     census_race = db.StringProperty()
