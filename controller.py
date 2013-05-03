@@ -124,6 +124,9 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         {'email':person_list_entry.get_value('email'),
                          'full_name':person_list_entry.get_value('fullname')
                         }, '; '.join(validation_errors)))
+
+                    # TODO Add the row to a spreadsheet for validation errors,
+                    # and create that spreadsheet if it doesn't exist.
                     continue
 
                 person_dict = self.gclient.personRowToDict(person_list_entry)
