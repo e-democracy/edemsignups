@@ -66,6 +66,7 @@ class GClient(object):
     def __init__(self):
         self.__docsClient__ = None
         self.__spreadsheetsClient__ = None
+        self.__rawSheetIds__ = {}
 
     # For now, being lazy and using username/password.
     # Eventually, we should use Oauth.
@@ -217,6 +218,29 @@ class GClient(object):
     # Google Drive Interaction Functions
     #####################################
 
+    def rawSheetId(self, spreadsheet):
+        """
+            Returns the id of the Raw Worksheet for the provided spreadsheet
+        """
+        sid = spreadsheet_id(spreadsheet)
+        if not sid in self.__rawSheetIds__:
+            raw_sheets = self.spreadsheetsClient.GetWorksheets(
+                            sid,
+                            q=WorksheetQuery(
+                                title=settings['raw_sheet_title']
+                            )
+                          ).entry
+            if len(raw_sheets) != 1:
+                raise IndexError('Spreadsheet %s should have 1 %s sheet' \
+                                % (orig_spreadsheet_id, 
+                                    settings['raw_sheet_title'])
+                            )
+            raw_sheet = raw_sheets[0]
+            self.__rawSheetIds__[sid] = worksheet_id(raw_sheet)
+
+        assert self.__rawSheetIds__[sid]
+        return self.__rawSheetIds__[sid]
+
     def getListFeed(self, spreadsheet, title):
         """
             A general method for finding and retrieving the ListFeed for a
@@ -265,6 +289,30 @@ class GClient(object):
         """
         return self.getListFeed(spreadsheet, settings['raw_sheet_title'])
 
+    def isFirstRawRowValid(self, spreadsheet):
+        """
+            Indicates weather the first row of the Raw sheet is a valid set of
+            headers.
+
+            Input:  spreadsheet - a Spreadsheet instance
+            Output: True if the first row is the set of expected headers, False
+                    otherwise
+        """
+        required_headers = ['email', 'firstname', 'lastname', 'fullname']
+        sid = spreadsheet_id(spreadsheet)
+        rsid = self.rawSheetId(spreadsheet)
+        row_cells = self.spreadsheetsClient.GetCells(sid, rsid,
+                                            q=CellQuery(1,1)).entry
+        
+        for i, cell in enumerate(row_cells):
+            if cell.content.text in required_headers:
+                required_headers.remove(cell.content.text)
+                if not required_headers: 
+                    break
+        
+        return not required_headers
+
+
     def deleteFirstRow(self, gsid, wsid):
         """
         Deletes the first row in the spreadsheet and worksheet associated with
@@ -273,6 +321,8 @@ class GClient(object):
         Input:  gsid - ID of the Google Spreadsheet to modify
                 wsid - ID of the worksheet to modify
         Output: True
+        Side Effect: The first row on the corresponding worksheet on Google
+                        Drive is deleted
         """
         # Deleting the first row actually involves:
         # 1.) Overwriting the values of the first row with those of the second
@@ -293,6 +343,18 @@ class GClient(object):
 
         return True
 
+    def deleteFirstRawRow(self, spreadsheet):
+        """
+            Deletes the first row in the Raw sheet of the provided spreadsheet.
+
+            Input:  spreadsheet - a Spreadsheet instance
+            Output: True
+            Side Effect: The first row of the spreadsheet's Raw worksheet will
+                            be deleted on Google Drive
+        """
+        sid = spreadsheet_id(spreadsheet)
+        rsid = self.rawSheetId(spreadsheet)
+        return self.deleteFirstRow(sid, rsid)
 
     def cloneRawSheet(self, new_spreadsheet_id, orig_spreadsheet_id, 
                         headers_to_add):

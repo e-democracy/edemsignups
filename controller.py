@@ -90,8 +90,14 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # Create a batch log for the new batch
             batch_log = new_batch_log(meta_dict,new_spreadsheet.FindHtmlLink())
             batch_logs.append(batch_log)
-
+            
             # 3.) Convert and import persons and create OptOutTokens
+            # Make sure the first row of the Raw sheet is the header row we 
+            # want, since sometimes meta headers are placed in these 
+            # spreadsheets
+            while not self.gclient.isFirstRawRowValid(new_spreadsheet):
+                self.gclient.deleteFirstRawRow(new_spreadsheet)
+
             person_list_feed = self.gclient.getRawListFeed(new_spreadsheet)
 
             persons = []
