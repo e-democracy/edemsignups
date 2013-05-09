@@ -7,7 +7,8 @@ from signupVerifier.io.gclient import GClient
 from signupVerifier.processors.initial_processor import importBatch,\
                     importPerson, addBatchChange, addPersonChange,\
                     sendVerificationEmails 
-from signupVerifier.processors.optout_processor import createOptOutToken
+from signupVerifier.processors.optout_processor import createOptOutToken,\
+                    getPersonByOptOutToken, processOptOut
 from signupVerifier.models import Person
 from signupVerifier.settings import settings
 
@@ -226,6 +227,12 @@ class OptOutPage(webapp2.RequestHandler):
     #       1.) Display Error (here)
 
     def get(self):
+        self.handleRequest()
+
+    def post(self):
+        self.handleRequest()
+
+    def handleRequest(self):
         params = self.request.params
 
         # processOptOut and getPersonByOptOutToken will both throw LookupError
@@ -233,6 +240,7 @@ class OptOutPage(webapp2.RequestHandler):
         try:
             if 'token' in params:
                 token = params['token']
+                logging.info('Got token %s' % token) 
                 if 'reason' in params:
                     reason = params['reason']
                     optout = processOptOut(token, reason)
@@ -245,7 +253,8 @@ class OptOutPage(webapp2.RequestHandler):
                     retval = template.render(optout_reason_template, values)
             else:
                 # Display a 404
-                self.about(404)
+                logging.info('No Token')
+                self.abort(404)
 
             self.response.write(retval)
 
