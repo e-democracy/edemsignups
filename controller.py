@@ -12,7 +12,8 @@ from signupVerifier.models import Person
 from signupVerifier.settings import settings
 
 import logging
-log_template = 'log_template.html'
+log_template = 'templates/log_template.html'
+optout_reason_template = 'templates/optout_request_reason.html'
 
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
@@ -212,6 +213,47 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
 
+class OptOutPage(webapp2.RequestHandler):
+
+    # Opt-Out Page
+    #   1.) User Visits Opt-out Page (here)
+    #   2.) Script checks for Out-Out Token (OptOutProcessor)
+    #   3a.) If Exists
+    #       1.) Ask user for Reason (here)
+    #       2.) Enter Opt-Out (OptOutProcessor)
+    #       3.) Remove Opt-Out Token (OptOutProcessor)
+    #   3b.) Else
+    #       1.) Display Error (here)
+
+    def get(self):
+        params = self.request.params
+
+        # processOptOut and getPersonByOptOutToken will both throw LookupError
+        # if the provided token can not be found.
+        try:
+            if 'token' in params:
+                token = params['token']
+                if 'reason' in params:
+                    reason = params['reason']
+                    optout = processOptOut(token, reason)
+                    # Display confirmation page
+                    retval = "success"
+                else:
+                    person = getPersonByOptOutToken(token)
+                    # Display page requesting reason for optout
+                    values = {'token': token}
+                    retval = template.render(optout_reason_template, values)
+            else:
+                # Display a 404
+                self.about(404)
+
+            self.response.write(retval)
+
+        except LookupError as e:
+            #Display 404
+            self.abort(404)
+
+        
 
 from gdata.spreadsheets.client import WorksheetQuery, ListQuery, CellQuery
 from gdata.spreadsheets.data import ListEntry, WorksheetEntry,\
@@ -297,15 +339,6 @@ class TestPage(webapp2.RequestHandler):
         self.response.write(retval)
 
 
-# Opt-Out Page
-#   1.) User Visits Opt-out Page (here)
-#   2.) Script checks for Out-Out Token (OptOutProcessor)
-#   3a.) If Exists
-#       1.) Ask user for Reason (here)
-#       2.) Enter Opt-Out (OptOutProcessor)
-#       3.) Remove Opt-Out Token (OptOutProcessor)
-#   3b.) Else
-#       1.) Display Error (here)
 
 # Opt-Out Email Handler
 #   Assumes all replies are out-outs
@@ -337,5 +370,6 @@ class TestPage(webapp2.RequestHandler):
 #   9.) Email Uploader (FinalProcessor)
 
 app = webapp2.WSGIApplication([('/', SpreadsheetInitialPage),
-                                ('/test', TestPage)],
+                                ('/test', TestPage),
+                                ('/optout', OptOutPage)],
                               debug=True)

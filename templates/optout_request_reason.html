@@ -1,0 +1,14 @@
+<html>
+  <head>
+    <title>E-Democracy Opt Out</title>
+  </head>
+  <body>
+    <p>Hello.</p>
+    <form action="/optout" method="post">
+        <input name="token" type="hidden" value="{{ token }}"/>
+        <p>Please help E-Democracy by telling us why you are opting out of joining</p>
+        <textarea name="reason" cols="80" rows="10"></textarea>
+        <input type="submit" value="submit"/>
+    </form>
+  </body>
+</html>
