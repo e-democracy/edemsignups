@@ -100,6 +100,14 @@ def processOptOut(token, reason):
                  person's wish to opt-out, and the associated OutOutToken 
                  is removed from the database.
     """
+    token = OptOutToken.verifyOrGet(token)
+    person = token.person
+    batch = token.batch
+    # TODO turn this into a transaction
+    optout = createOptOut(person, batch, reason)
+    removeOptOutToken(token)
+    return optout
+
 
 def getOptOuts(since=None):
     """
