@@ -123,18 +123,7 @@ class Person(db.Model):
             Throws: TypeError if person is not a string or Person
                     LookupError if person can not be found
         """
-        if isinstance(person, Person):
-            return person
-
-        if isinstance(person, basestring):
-            person_key = person
-            person = Person.get(person_key)
-            if not (person and isinstance(person, Person)):
-                raise LookupError('provided person could not be found: %s' % 
-                                    person_key) 
-            return person
-        else:
-            raise TypeError('person must be either string or Person')
+        return verifyOrGet(cls, person)
 
 class PersonChange(db.Model):
     """ Represents an evolution of person"""
