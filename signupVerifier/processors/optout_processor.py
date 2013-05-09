@@ -111,13 +111,15 @@ def processOptOut(token, reason):
 
 def getOptOuts(since=None):
     """
-    Retrieves a list of all OptOuts that have occurred. If since is 
+    Retrieves an iterable of all OptOuts that have occurred. If since is 
     specified, will only retrieve OptOuts since the specified datetime.
 
     Input:  since - optional datetime indicating that only OptOuts newer
             than since should be retrieved.
-    Output: a list of OptOut instances
+    Output: an iterable of OptOut instances
     """
-    pass
-
+    q = OptOut.all()
+    if since:
+        q.filter('occurred >=', since)
+    return q.run()
 
