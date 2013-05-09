@@ -15,6 +15,7 @@ from signupVerifier.settings import settings
 import logging
 log_template = 'templates/log_template.html'
 optout_reason_template = 'templates/optout_request_reason.html'
+optout_confirm_template = 'templates/optout_confirm.html'
 
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
@@ -245,7 +246,7 @@ class OptOutPage(webapp2.RequestHandler):
                     reason = params['reason']
                     optout = processOptOut(token, reason)
                     # Display confirmation page
-                    retval = "success"
+                    retval = template.render(optout_confirm_template, {}) 
                 else:
                     person = getPersonByOptOutToken(token)
                     # Display page requesting reason for optout
