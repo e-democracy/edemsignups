@@ -10,6 +10,35 @@ def asDict(cls, instance):
 
     return model_dict
 
+def verifyOrGet(cls, challenge):
+    """
+        Verifies that the provided challenge refers in some way to an actual
+        instance of the provided class, and returns the instance it refers to. 
+        If challenge is an instance of the class, than it will simply be 
+        returned. If challenge is a string, then the function will assume it is
+        a key and attempt to retrieve the class instance associated with it.
+
+        Input:  cls - The class that is being verified or fetched for.
+                challege - Either an instance of cls, or a string that is the 
+                            key of an instance of cls.
+        Output: An instance of cls
+        Throws: TypeError if challenge is not a string or cls instnace
+                LookupError if challenge can not be found
+    """
+    if isinstance(challenge, cls):
+        return challenge
+
+    if isinstance(challenge, basestring):
+        key = challenge
+        challenge = cls.get(key)
+        if not (challenge and isinstance(challenge, cls)):
+            raise LookupError('provided key could not be found: %s' %
+                                key)
+        return challenge
+    else:
+        raise TypeError('challenge must be either string or %s' % str(cls))
+
+
 class Batch(db.Model):
     """ Represents a batch of sign-ups gathered at a particular event and
     entered by a particular staff person."""
@@ -38,19 +67,7 @@ class Batch(db.Model):
             Throws: TypeError if batch is not a string or Batch
                     LookupError if batch can not be found
         """
-        if isinstance(batch, Batch):
-            return batch
-
-        if isinstance(batch, basestring):
-            batch_key = batch
-            batch = Batch.get(batch_key)
-            if not (batch and isinstance(batch, Batch)):
-                raise LookupError('provided batch could not be found: %s' %
-                                    batch_key)
-            return batch
-        else:
-            raise TypeError('batch must be either string or Batch')
-    
+        return verifyOrGet(cls, batch)
 
 class BatchChange(db.Model):
     """ Represents an evolution of a batch"""
@@ -155,20 +172,7 @@ class OptOutToken(db.Model):
             Throws: TypeError if token is not a string or OptOutToken
                     LookupError if token can not be found
         """
-        if isinstance(token, cls):
-            return token
-
-        if isinstance(token, basestring):
-            key = token
-            token = cls.get(key)
-            if not (token and isinstance(token, cls)):
-                raise LookupError('provided token could not be found: %s' %
-                                    key)
-            return token
-        else:
-            raise TypeError('token must be either string or Batch')
-    
-
+        return verifyOrGet(cls, token)
 
 class OptOut(db.Model):
     """ Record of a person opting out"""
