@@ -305,8 +305,9 @@ class GClient(object):
                                             q=CellQuery(1,1)).entry
         
         for i, cell in enumerate(row_cells):
-            if cell.content.text in required_headers:
-                required_headers.remove(cell.content.text)
+            if cell.content.text.lower().replace(" ", "") in required_headers:
+                required_headers.remove(cell.content.text.lower().replace(" ",
+                                                                        ""))
                 if not required_headers: 
                     break
         
