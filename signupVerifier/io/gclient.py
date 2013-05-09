@@ -701,17 +701,8 @@ class GClient(object):
             Output: An instance of BatchSpreadsheet if successful, False
                     otherwise
         """
-        if not (isinstance(batch, basestring) or \
-                    isinstance(batch, Batch)):
-            raise TypeError('batch must be either string or Batch')
-        
-        if isinstance(batch, basestring):
-            q = Batch.all()
-            q.filter('__key__ =', batch)
-            batch = q.get()
-        
-        if not (batch and isinstance(batch, Batch)):
-            raise LookupError('provided batch could not be found') 
+
+        batch = Batch.verifyOrGet(batch)
 
         if not isinstance(spreadsheet, Resource) and \
                         spreadsheet.GetResourceType() != 'spreadsheet':
