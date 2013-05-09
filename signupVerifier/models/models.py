@@ -139,6 +139,36 @@ class OptOutToken(db.Model):
                                     collection_name='optout_tokens')
     batch = db.ReferenceProperty(Batch, required = True,
                                     collection_name='optout_tokens')
+    @classmethod
+    def verifyOrGet(cls, token):
+        """
+            Verifies that the provided batch refers in some way to an actual
+            OptOutToken instance, and returns the OptOutToken instance it 
+            refers to. If token is an OptOutToken instance, than it will simply 
+            be returned. If token is a string, then the method will assume it 
+            is a key and attempt to retrieve the OptOutToken instance 
+            associated with it.
+
+            Input: token - Either an OptOutToken instance, or a string that is 
+                            the key of an OptOutToken instance.
+            Output: An OptOutToken instance
+            Throws: TypeError if token is not a string or OptOutToken
+                    LookupError if token can not be found
+        """
+        if isinstance(token, cls):
+            return token
+
+        if isinstance(token, basestring):
+            key = token
+            token = cls.get(key)
+            if not (token and isinstance(token, cls)):
+                raise LookupError('provided token could not be found: %s' %
+                                    key)
+            return token
+        else:
+            raise TypeError('token must be either string or Batch')
+    
+
 
 class OptOut(db.Model):
     """ Record of a person opting out"""
