@@ -169,7 +169,7 @@ class OptOut(db.Model):
                                     collection_name='optouts')
     batch = db.ReferenceProperty(Batch, required = True, 
                                     collection_name='optouts')
-    reason = db.Text()
+    reason = db.TextProperty()
     occurred = db.DateTimeProperty()
 
 class Bounce(db.Model):

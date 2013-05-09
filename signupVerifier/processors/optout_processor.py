@@ -1,6 +1,7 @@
 # coding=utf-8
 
-from ..models import Batch, Person, OptOutToken 
+from ..models import Batch, Person, OptOutToken, OptOut 
+from google.appengine.ext.db import delete as modelDelete
 
 def createOptOutToken(batch, person):
     """
@@ -29,20 +30,22 @@ def getPersonByOptOutToken(token):
     token = OptOutToken.verifyOrGet(token)
     return token.person
 
-def removeOptOutToken(optouttoken):
+def removeOptOutToken(token):
     """
     Removes the associated OptOutToken from the database. If an OptOutToken
     instance is provided, then it will be removed from the database. If a
     string is provided, then an associated OptOutToken will be searched for
     and removed from the database.
 
-    Input: optouttoken - either an OptOutToken, or a token string 
+    Input: token - either an OptOutToken, or a token string 
                          associated with an OptOutToken in the database.
     Output: True if removal is successful, False otherwise
     Side Effect: The database record associated with the provided
                  optouttoken will be deleted.
     """
-    token = OutputToken.verifyOrGet(token)
+    token = OptOutToken.verifyOrGet(token)
+    token.delete()
+    return True
 
 def removeAllOptOutTokens():
     """
@@ -54,21 +57,31 @@ def removeAllOptOutTokens():
                  database.
     """
     q = OptOutToken.all(keys_only=True)
-    OptOutToken.delete(q.run())
+    modelDelete(q.run())
+    return True
 
-def createOptOut(person, reason):
+def createOptOut(person, batch, reason):
     """
     Creates a record in the database that the user opt-out of joining the
     forum indicated by the email that he/she received, and returns the
     created OptOut.
 
     Input:  person - the Person model who is opting out
+            batch - the Batch associated with this optout
             reason - a string provided by the person as to why they are
                      opting out.
     Output: an OptOut model created by the logging of the opt-out.
     Side Effect: an entry is saved to the database for the opt-out
     """
-    pass
+    person = Person.verifyOrGet(person)
+    batch = Batch.verifyOrGet(batch)
+    if not isinstance(reason, basestring):
+        raise TypeError('reason must be a string')
+    optout = OptOut(person=person,
+                    batch=batch,
+                    reason=reason)
+    optout.put()
+    return optout 
 
 def processOptOut(token, reason):
     """
