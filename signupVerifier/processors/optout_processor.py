@@ -26,7 +26,8 @@ def getPersonByOptOutToken(token):
     Output: a Person model if the provided token is found, or False if not
             found.
     """
-    pass
+    token = OptOutToken.verifyOrGet(token)
+    return token.person
 
 def removeOptOutToken(optouttoken):
     """
@@ -41,6 +42,7 @@ def removeOptOutToken(optouttoken):
     Side Effect: The database record associated with the provided
                  optouttoken will be deleted.
     """
+    token = OutputToken.verifyOrGet(token)
 
 def removeAllOptOutTokens():
     """
@@ -51,6 +53,8 @@ def removeAllOptOutTokens():
     Side Effect: All OptOutToken instances will be deleted from the
                  database.
     """
+    q = OptOutToken.all(keys_only=True)
+    OptOutToken.delete(q.run())
 
 def createOptOut(person, reason):
     """
