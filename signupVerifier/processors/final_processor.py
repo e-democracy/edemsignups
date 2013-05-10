@@ -4,7 +4,7 @@ from ..models import Batch
 
 final_email_template_path = 'signupVerifier/processors/final_email.html'
 
-def getBatches(self, before=dt.datetime.now() - dt.timedelta(hours=50), 
+def getBatches(before=dt.datetime.now() - dt.timedelta(hours=50), 
                 after=dt.datetime.now() - dt.timedelta(hours=46)):
     """
     Retrieves an interable of Batch models. If before and/or after are
@@ -15,15 +15,16 @@ def getBatches(self, before=dt.datetime.now() - dt.timedelta(hours=50),
             after - Optional datetime indicating the oldest batches to return
     Output: Interable of Batch instances
     """
+    print before
     q = Batch.all()
     if before:
         q.filter('created <=', before)
     if after:
-        q.filter('after >=', after)
+        q.filter('created >=', after)
     for batch in q.run():
         yield batch
 
-def emailFollowUpToStaffPerson(self, staff_name, staff_email, batch_links, 
+def emailFollowUpToStaffPerson(staff_name, staff_email, batch_links, 
                         email_template):
     """
     Sends an email to the specified staff member with links and
@@ -41,7 +42,7 @@ def emailFollowUpToStaffPerson(self, staff_name, staff_email, batch_links,
     """
     pass
 
-def emailFollowUpsToStaff(self, batches, email_template, url_func):
+def emailFollowUpsToStaff(batches, email_template, url_func):
     """
     Based on the provided batches, generates and sends emails to staff
     people with the information needed to follow up on Persons who bounced
