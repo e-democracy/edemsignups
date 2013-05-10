@@ -1,0 +1,24 @@
+<html>
+  <body>
+    Hello,
+
+    <p>The E-Democracy Signup Verifier has processed the results of signups submitted two days ago.</p>
+
+    {% if bounces %}
+    <p>The following batches had email addresses that bounced. For each batch, click the Name/Date of the event to download a spreadsheet that contains information on the bouncers.</p>
+    <ul>
+      {% for batch, ss in bounces %}
+        <li><a href="{{ ss.FindHtmlLink() }}">{{ batch.event_name }} on {{ batch.event_date }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if optouts %}
+    <p>The following batches had email addresses that opted out of signuping up. For each batch, click the Name/Date of the event to download a spreadsheet containing information about those who opted out.</p>
+      <ul>
+      {% for batch, ss in bounces %}
+        <li><a href="{{ ss.FindHtmlLink() }}">{{ batch.event_name }} on {{ batch.event_date }}</a></li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  </body>
+</html>
