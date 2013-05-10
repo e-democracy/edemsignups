@@ -1,5 +1,5 @@
 # coding=utf-8
-import datetime
+import datetime as dt
 import re
 from gdata.docs.client import DocsClient, DocsQuery
 from gdata.docs.data import Resource
@@ -174,7 +174,7 @@ class GClient(object):
 
 
         if 'event_date' in d:
-            d['event_date'] = datetime.datetime.strptime(d['event_date'],
+            d['event_date'] = dt.datetime.strptime(d['event_date'],
                             "%m/%d/%Y").date()
 
         return d
@@ -738,3 +738,15 @@ class GClient(object):
             new_spreadsheets = spreadsheets
 
         return new_spreadsheets
+
+    def getBatchSpreadsheets(self, before=dt.datetime.now() -
+                            dt.timedelta(hours=50), after=dt.datetime.now() - 
+                            dt.timedelta(hours=46)):
+        """
+        Returns an interable of BatchSpreadsheet instances. This is a wrapper
+        of signupVerifier.processors.final_processor.getBatches.
+        """
+        for batch in getBatches(before, after):
+            spreadsheet = batch.spreadsheets.get()
+            if spreadsheet:
+                yield spreadsheet

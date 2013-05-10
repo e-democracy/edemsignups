@@ -1,5 +1,27 @@
 # coding=utf-8
+import datetime as dt
+from ..models import Batch
 
+final_email_template_path = 'signupVerifier/processors/final_email.html'
+
+def getBatches(self, before=dt.datetime.now() - dt.timedelta(hours=50), 
+                after=dt.datetime.now() - dt.timedelta(hours=46)):
+    """
+    Retrieves an interable of Batch models. If before and/or after are
+    provided, these are used to limit retrived Batch instances to only those
+    from before or after the provided datetimes.
+
+    Input:  before - Optional datetime indicating the newest batches to return
+            after - Optional datetime indicating the oldest batches to return
+    Output: Interable of Batch instances
+    """
+    q = Batch.all()
+    if before:
+        q.filter('created <=', before)
+    if after:
+        q.filter('after >=', after)
+    for batch in q.run():
+        yield batch
 
 def emailFollowUpToStaffPerson(self, staff_name, staff_email, batch_links, 
                         email_template):
