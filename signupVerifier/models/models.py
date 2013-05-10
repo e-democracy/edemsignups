@@ -177,5 +177,5 @@ class Bounce(db.Model):
     person = db.ReferenceProperty(Person, required = True)
     batch = db.ReferenceProperty(Batch, required = True, 
                                  collection_name='bounces')
-    message = db.Text()
+    message = db.TextProperty()
     occurred = db.DateTimeProperty(required = True, auto_now_add = True)
