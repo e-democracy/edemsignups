@@ -16,6 +16,7 @@ import logging
 log_template = 'templates/log_template.html'
 optout_reason_template = 'templates/optout_request_reason.html'
 optout_confirm_template = 'templates/optout_confirm.html'
+followup_template = 'templates/followup_template.html'
 
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
@@ -358,28 +359,83 @@ class TestPage(webapp2.RequestHandler):
 #   3.) Add entry in OptOut (OptOutProcessor)
 #   4.) Remove associated Opt-Out Token (OptOutProcessor)
 
-# Follow Up Script
-#   1.) Delete all Opt-Out Tokens (OptOutProcessor)
-#   2.) Get all Spreadsheet from 2 days prior (GClients)
-#   3.) Get all Opt-Out from previous 2 days (here and OptOutProcessor)
-#   4.) Get all Bounces from previous 2 days (here and BounceProcessor)
-#   5.) For each Batch w/out-out (GClients)
-#       1.) Create New Spreadsheet (GClients)
-#       2.) Enter prev_bid in MetaSheet (GClients)
-#       3.) Enter Row in Persons sheet for each Opt-Out + Reason & Occurred
-#           (GClients)
-#   6.) For each Batch with Bounce (GClients)
-#       1.) Create New Spreadsheet (GClients)
-#       2.) Ente prev_bid in Meta sheet (GClients)
-#       3.) Enter Row in Persons sheet for each Bounce + Occurred (GClients)
-#   7.) For each staff with a downloadable spreadsheet, email download links w/
-#       directions (FinalProcessor)
-#   8.) For each Batch
-#       1.) Make a CSV (FinalProcessor)
-#       2.) Add all Person without Bounce or Opt-Out (FinalProcessor)
-#   9.) Email Uploader (FinalProcessor)
+class SpreadsheetFollowupPage(webapp2.RequestHandler):
+
+    def __init__(self, request, response):
+        # webapp2 uses initialize instead of __init__, cause it's special
+        self.initialize(request, response)
+        self.__gclient__ = None
+    
+    @property
+    def gclient(self):
+        if self.__gclient__ is None:
+            self.__gclient__ = GClient()
+
+        assert self.__gclient__
+        return self.__gclient__
+
+
+       
+    def get(self):
+        # Used to organize what to send to who
+        def new_followup_struct():
+            return {'optouts': [],
+                    'bounces': []}
+
+        # Follow Up Script
+        #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
+        #   2.) Get associated Batches
+        batches = [bs.batch for bs in self.gclient.getBatchSpreadsheets()]
+        staff_followups = dict()
+        successes = []
+        for batch in batches:
+        #   3.) Delete all Opt-Out Tokens associated with Batches (OptOutProcessor)
+        #   4.) Get all Opt-Outs associated with Batches 
+        #   5.) Get all Bounces associated with Bounces
+            removeAllOptOutTokensFromBatches([batch])
+            optouts = batch.optouts.run()
+            bounces = batch.bounces.run()
+            
+        # 6.) For each Batch w/opt-out
+            if optouts:
+            # 1.) Clone associated Spreadsheet for Optouts (GClient)
+                ooss, brws = self.gclient.createOptOutSpreadsheet(batch)
+                if not batch.staff_email in staff_followups:
+                    staff_followups[batch.staff_email] = new_followup_struct()
+                staff_followups[batch.staff_email]['optouts'].append((batch,
+                ooss))
+        #   7.) For each Batch with Bounce (GClients)
+            if bounces:
+            # 1.) Clone associated Spreadsheet for Bounce (GClients)
+                bss, brws = self.gclient.createBounceSpreadsheet(bounces)
+                if not batch.staff_email in staff_followups:
+                    staff_followups[batch.staff_email] = new_followup_struct()
+                staff_followups[batch.staff_email]['bounces'].append((batch,
+                                                                        bss))
+
+            successful_signups = getSuccessfulSignups(batch)
+            successes.append((batch, successful_signups))
+
+        #   8.) For each staff with a downloadable spreadsheet, email download 
+        #       links w/directions (FinalProcessor)
+        for email,followup in enumerate(staff_followups):
+            if followup['optouts'] or followup['bounces']:
+                email_body = template.render(followup_template, followup)
+                mail.send_mail(settings['email_as'], email, 
+                                'Submitted Signups Followup', email_body)
+                
+        #   9.) For each Batch
+        #       1.) Make a CSV of successful signups (FinalProcessor)
+        csvs = [("% - %.csv" % (batch.event_name, batch.staff_name),
+                    personsToCsv(successful_signups)) 
+                    for batch, successful_signups in successes]
+
+        #   10.) Email Uploader (FinalProcessor)
+        emailCsvs(csvs) 
+            
 
 app = webapp2.WSGIApplication([('/', SpreadsheetInitialPage),
                                 ('/test', TestPage),
-                                ('/optout', OptOutPage)],
+                                ('/optout', OptOutPage),
+                                ('/followup', SpreadsheetFollowupPage)],
                               debug=True)

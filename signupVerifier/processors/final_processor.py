@@ -1,8 +1,27 @@
 # coding=utf-8
 import datetime as dt
+import csv
+from google.appengine.ext.webapp import template
+from google.appengine.api import mail
+
+
+from StringIO import StringIO
 from ..models import Batch
 
-final_email_template_path = 'signupVerifier/processors/final_email.html'
+csvs_ready_template= 'signupVerifier/processors/csvs_ready_to_upload.html'
+
+ordered_person_attributes_for_upload = [                                        
+    'group_id',                                                                 
+    'email',                                                                    
+    'first_name',                                                               
+    'last_name',                                                                
+    'full_name',                                                                
+    'neighborhood',                                                             
+    'street_address',                                                           
+    'city',                                                                     
+    'state',                                                                    
+    'zip_code',                                                                 
+    'phone']
 
 def getBatches(before=dt.datetime.now() - dt.timedelta(hours=50), 
                 after=dt.datetime.now() - dt.timedelta(hours=46)):
@@ -70,7 +89,19 @@ def personsToCsv(persons):
     Input:  persons - a list of Person instances.
     Output: a CSV.
     """
-    pass
+    csv_string = StringIO()
+    dict_writer = csv.DictWriter(csv_string,
+                                    ordered_person_attributes_for_upload)
+    dict_wirter.writer.writerow(ordered_person_attributes_for_upload)
+    for person in persons:
+        person = person.asDict()
+        forums = person['forums']
+        del person['forums']
+        for forum in forums:
+            person['group_id'] = forum
+            dict_writer.writer.writerows(person)
+
+    return csv_string
 
 
 def getSuccessfulSignups(batch):
@@ -78,12 +109,15 @@ def getSuccessfulSignups(batch):
     Searches the provided Batch instance and returns a list of Person 
     instances who have not bounced or opted out.  
 
-    Input:  batch - a Batch instance to search through. 
-    Output: a list of Person instances who did not bounce or opt-out. 
+    Input:  batch - a Batch instance or key to search through. 
+    Output: an interable of Person instances who did not bounce or opt-out. 
     """
-    pass
+    batch = Batch.verifyOrGet(batch)
+    for person in batch.persons.run():
+        if not person.bounces.get() and not person.optouts.get():
+            yield person
 
-def emailCsvs(csvs, email_template, address):
+def emailCsvs(csvs, email_template=csvs_ready_template):
     """
     Sends an email to the provided address that includes the provided list
     of CSVs. 
@@ -94,4 +128,10 @@ def emailCsvs(csvs, email_template, address):
     Output: True if successful, False otherwise
     Side Effect: An email is sent to the provided address.
     """
-    pass
+    email_body = template.render(email_template, {})
+    mail.send_mail(settings['email_as'],
+                    settings['admin_email'],
+                    'E-Democracy CSVs ready for Upload',
+                    email_body,
+                    attachments=csvs)
+    return True

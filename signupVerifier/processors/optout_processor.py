@@ -60,6 +60,22 @@ def removeAllOptOutTokens():
     modelDelete(q.run())
     return True
 
+def removeAllOptOutTokensFromBatches(batches):
+    """
+    Deletes all records from the OptOutToken table that are associated with the
+    provided Batch instances, effectively making all associated opt out tokens 
+    expire.
+
+    Input: batches - a list of either Batch instances or Batch keys
+    Output: True if removal is successful, False otherwise
+    Side Effect: All OptOutToken instances will be deleted from the
+                 database.
+    """
+    for batch in batches:
+        batch = Batch.verifyOrGet(batch)
+        modelDelete(batch.optout_tokens.run())
+    return True
+
 def createOptOut(person, batch, reason):
     """
     Creates a record in the database that the user opt-out of joining the
