@@ -18,7 +18,7 @@ class BounceHandler(BounceNotificationHandler):
             add an entry to the Bounce table.
         """
         bouncing_email = bounce_message.original['to']
-        notificaiton = bounce_message.notification['text']
+        notification = bounce_message.notification['text']
         logging.debug('Received bounce from %s' % bouncing_email)
 
         # Save the bounce to the DB
