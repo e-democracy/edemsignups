@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from models import Bounce, Person
+from ..models import Bounce, Person
 import datetime as dt
 
 def createBounce(person, message, bounce_datetime=None):
