@@ -59,7 +59,9 @@ person_key_map = {
     'parents_born_where': 'parentswhere',
     'num_in_house': 'inhouse',
     'yrly_income': 'yrlyincome',
-    'person_id': 'personid'
+    'person_id': 'personid',
+    'optout_reason': 'optoutreason',
+    'optout_occurred': 'optoutoccurred'
 }
 
 
@@ -203,10 +205,15 @@ class GClient(object):
 
         # Casting
         yes = ['yes', 'true']
-        d['num_in_house'] = int(d['num_in_house'])
-        d['yrly_income'] = int(d['yrly_income'])
-        d['born_out_of_us'] = d['born_out_of_us'].lower() in yes
-        d['parents_born_out_of_us'] = d['parents_born_out_of_us'].lower() in yes
+        if 'num_in_house' in d and d['num_in_house']:
+            d['num_in_house'] = int(d['num_in_house'])
+        if 'yrly_income' in d and d['yrly_income']:
+            d['yrly_income'] = int(d['yrly_income'])
+        if 'born_out_of_us' in d and d['born_out_of_us']:
+            d['born_out_of_us'] = d['born_out_of_us'].lower() in yes
+        if 'parents_born_out_of_us' in d and d['parents_born_out_of_us']:
+            d['parents_born_out_of_us'] = d['parents_born_out_of_us'].lower() \
+                                                                        in yes
         for i in forum_keys:
             if d[i] is not None:
                 d['forums'].append(d[i])
@@ -603,8 +610,8 @@ class GClient(object):
             optout_dict = optout.person.asDict()
 
             # Adjust some keys, add additional key/values
-            optout_dict['optout_time'] = optout.occurred
-            optout_dict['optout_message'] = optout.message
+            optout_dict['optout_occurred'] = optout.occurred
+            optout_dict['optout_reason'] = optout.reason
             optout_dict['person_id'] = optout.person.key()
             
 
