@@ -9,6 +9,7 @@ from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
 					ListsFeed, ListEntry, BuildBatchCellsUpdate
 from ..settings import settings
 from ..models import Batch, BatchSpreadsheet
+from ..processors.final_processor import getBatches
 
 def spreadsheet_id(spreadsheet):
     """
@@ -746,7 +747,7 @@ class GClient(object):
         Returns an interable of BatchSpreadsheet instances. This is a wrapper
         of signupVerifier.processors.final_processor.getBatches.
         """
-        for batch in getBatches(before, after):
+        for batch in getBatches(before=before, after=after):
             spreadsheet = batch.spreadsheets.get()
             if spreadsheet:
                 yield spreadsheet

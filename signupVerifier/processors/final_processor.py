@@ -15,7 +15,6 @@ def getBatches(before=dt.datetime.now() - dt.timedelta(hours=50),
             after - Optional datetime indicating the oldest batches to return
     Output: Interable of Batch instances
     """
-    print before
     q = Batch.all()
     if before:
         q.filter('created <=', before)
