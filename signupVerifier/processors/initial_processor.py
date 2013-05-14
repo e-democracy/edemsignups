@@ -1,6 +1,7 @@
 # coding=utf-8
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
+from webapp2 import uri_for
 
 from ..settings import settings
 from ..models import Batch, BatchChange, Person, PersonChange
@@ -199,7 +200,8 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
                 'last_name': person.last_name,
                 'full_name': person.full_name,
                 'email': person.email,
-                'optout_token': optout_token.key()
+                'optout_uri': uri_for('optout', token = optout_token.key(),
+                                        _full=True)
             }
 
             email_body = template.render(verification_email_template_path,
