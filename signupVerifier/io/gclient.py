@@ -234,9 +234,10 @@ class GClient(object):
         # names, and Google semi-randomly assigns XML names in these cases. So
         # we have to make the forum column names strings in the spreadsheet.
         # http://comments.gmane.org/gmane.org.google.api.docs/1306
+        forum_keys = [key for key in d.keys() if
+                            key.startswith('forum')]
+        forum_keys.sort()
         d['forums'] = []
-        forum_keys = [key.replace('forum', '') for key in d.keys() 
-                                        if key.startswith('forum')].sort()
         for i in forum_keys:
             if d[i] is not None:
                 d['forums'].append(d[i])
