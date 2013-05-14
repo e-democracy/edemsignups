@@ -159,11 +159,6 @@ class GClient(object):
         if 'personid' in d and isinstance(d['personid'], Key):
             d['personid'] = '%s' % d['personid'].id()
 
-        # DEBUGGING
-        for key, value in d.iteritems():
-            logging.info('%s: %s' % (key, value))
-
-        
         return self.dictToRow(d)
 
     def rowToDict(self, r):
@@ -639,8 +634,6 @@ class GClient(object):
             
 
             optout_row = self.personDictToRow(optout_dict)
-            # DEBUGGING
-            logging.info(optout_row.ToString())
             self.spreadsheetsClient.AddListEntry(optout_row, ngsid, nbsid)
 
         return (new_spreadsheet, new_raw_sheet)
