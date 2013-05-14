@@ -236,7 +236,7 @@ class GClient(object):
         # http://comments.gmane.org/gmane.org.google.api.docs/1306
         d['forums'] = []
         forum_keys = [key.replace('forum', '') for key in d.keys() 
-                                        if key.startswith('forum')].sorted()
+                                        if key.startswith('forum')].sort()
         for i in forum_keys:
             if d[i] is not None:
                 d['forums'].append(d[i])
@@ -711,8 +711,8 @@ class GClient(object):
         # Validate at least one forum is selected
         # Easiest to convert to dict and look for special keys
         d = self.rowToDict(r)
-        forum_keys = [key for key in d.keys() if (key.startswith('_') or
-                        key.isdigit()) and d[key] is not None] 
+        forum_keys = [key for key in d.keys() if key.startswith('forum')
+                       and d[key] is not None] 
         if not forum_keys:
             retval.append('No forums selected for the user')
 
