@@ -139,7 +139,7 @@ class GClient(object):
         for dict_key, row_key in person_key_map.iteritems():
             if dict_key in d:
                 if d[dict_key]:
-                    d[row_key] = d[dict_key]
+                    d[row_key] = '%s' % d[dict_key]
                 del d[dict_key]
         for i,forum in enumerate(d['forums']):
             d['forum%s' % (i+1)] = forum
@@ -153,7 +153,7 @@ class GClient(object):
 
         #Casting
         def cast_datetime_to_str(dti):
-            return dti.strftime('%m/%d/%Y')
+            return dti.strftime('%m/%d/%Y %H:%M:%S')
         if 'occurred' in d and isinstance(d['occurred'], dt.datetime):
             d['occurred'] = cast_datetime_to_str(d['occurred'])
         if 'personid' in d and isinstance(d['personid'], Key):
@@ -580,6 +580,9 @@ class GClient(object):
 
             # Adjust some keys, add additional key/values
             bounce_dict['person_id'] = bounce.person.key()
+            bounce_dict['occurred'] = bounce.occurred
+            bounce_dict['message'] = bounce.message
+
             
 
             bounce_row = self.personDictToRow(bounce_dict)
@@ -615,7 +618,7 @@ class GClient(object):
         ogsid = ogs.gsid
         batch_id = str(batch.key())
         
-        headers_to_add = ['OptOut Time', 'OptOut Message', 'Person ID']
+        headers_to_add = ['Occurred', 'Reason', 'Person ID']
         (new_spreadsheet, new_raw_sheet) = self.cloneSpreadsheetForFailure(
                                             ogsid, batch_id, " - OptOuts", 
                                                 headers_to_add)
