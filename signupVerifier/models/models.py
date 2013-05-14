@@ -106,7 +106,7 @@ class Person(db.Model):
                                         required = True)
     def asDict(self):
         """ Returns the instance of Person as a dict"""
-        return asDict(Batch, self)
+        return asDict(Person, self)
 
     @classmethod
     def verifyOrGet(cls, person):
