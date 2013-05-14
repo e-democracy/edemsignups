@@ -336,7 +336,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         # 6.) For each Batch w/opt-out
             if optouts:
             # 1.) Clone associated Spreadsheet for Optouts (GClient)
-                ooss, brws = self.gclient.createOptOutSpreadsheet(batch)
+                ooss, oows = self.gclient.createOptOutSpreadsheet(batch)
                 if not batch.staff_email in staff_followups:
                     staff_followups[batch.staff_email] = new_followup_struct()
                 staff_followups[batch.staff_email]['optouts'].append((batch,
@@ -344,7 +344,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         #   7.) For each Batch with Bounce (GClients)
             if bounces:
             # 1.) Clone associated Spreadsheet for Bounce (GClients)
-                bss, brws = self.gclient.createBounceSpreadsheet(bounces)
+                bss, brws = self.gclient.createBouncedSpreadsheet(bounces)
                 if not batch.staff_email in staff_followups:
                     staff_followups[batch.staff_email] = new_followup_struct()
                 staff_followups[batch.staff_email]['bounces'].append((batch,
