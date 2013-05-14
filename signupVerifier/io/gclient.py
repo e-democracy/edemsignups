@@ -10,6 +10,9 @@ from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
 from ..settings import settings
 from ..models import Batch, BatchSpreadsheet
 from ..processors.final_processor import getBatches
+from google.appengine.api.datastore_types import Key
+
+import logging
 
 def spreadsheet_id(spreadsheet):
     """
@@ -59,9 +62,7 @@ person_key_map = {
     'parents_born_where': 'parentswhere',
     'num_in_house': 'inhouse',
     'yrly_income': 'yrlyincome',
-    'person_id': 'personid',
-    'optout_reason': 'optoutreason',
-    'optout_occurred': 'optoutoccurred'
+    'person_id': 'personid'
 }
 
 
@@ -136,13 +137,32 @@ class GClient(object):
         """
         # Clean/rearrange keys
         for dict_key, row_key in person_key_map.iteritems():
-            d[row_key] = d[dict_key]
-            del d[dict_key]
+            if dict_key in d:
+                if d[dict_key]:
+                    d[row_key] = d[dict_key]
+                del d[dict_key]
         for i,forum in enumerate(d['forums']):
-            d[i] = forum
+            d['forum%s' % (i+1)] = forum
         del d['forums']
-        if hasattr(d, 'source_batch'):
+        if 'source_batch' in d:
             del d['source_batch']
+        keys = d.keys()
+        for key in keys:
+            if not d[key]:
+                del d[key]
+
+        #Casting
+        def cast_datetime_to_str(dti):
+            return dti.strftime('%m/%d/%Y')
+        if 'occurred' in d and isinstance(d['occurred'], dt.datetime):
+            d['occurred'] = cast_datetime_to_str(d['occurred'])
+        if 'personid' in d and isinstance(d['personid'], Key):
+            d['personid'] = '%s' % d['personid'].id()
+
+        # DEBUGGING
+        for key, value in d.iteritems():
+            logging.info('%s: %s' % (key, value))
+
         
         return self.dictToRow(d)
 
@@ -199,9 +219,7 @@ class GClient(object):
                 del d[row_key]
                 if isinstance(d[dict_key], basestring):
                     d[dict_key] = d[dict_key].strip()
-        d['forums'] = []
-        forum_keys = [key for key in d.keys() if key.startswith('_') or
-                                                key.isdigit()]
+        
 
         # Casting
         yes = ['yes', 'true']
@@ -214,6 +232,13 @@ class GClient(object):
         if 'parents_born_out_of_us' in d and d['parents_born_out_of_us']:
             d['parents_born_out_of_us'] = d['parents_born_out_of_us'].lower() \
                                                                         in yes
+        # Forum column/dict keys - XML does not support tags with just numeric
+        # names, and Google semi-randomly assigns XML names in these cases. So
+        # we have to make the forum column names strings in the spreadsheet.
+        # http://comments.gmane.org/gmane.org.google.api.docs/1306
+        d['forums'] = []
+        forum_keys = [key.replace('forum', '') for key in d.keys() 
+                                        if key.startswith('forum')].sorted()
         for i in forum_keys:
             if d[i] is not None:
                 d['forums'].append(d[i])
@@ -546,7 +571,7 @@ class GClient(object):
         print "key: %s" % batch_id 
 
         
-        headers_to_add = ['Bounce Time', 'Bounce Message', 'Person ID']
+        headers_to_add = ['Occurred', 'Message', 'Person ID']
         (new_spreadsheet, new_raw_sheet) = self.cloneSpreadsheetForFailure(
                                             ogsid, batch_id, " - Bounced", 
                                                 headers_to_add)
@@ -559,8 +584,6 @@ class GClient(object):
             bounce_dict = bounce.person.asDict()
 
             # Adjust some keys, add additional key/values
-            bounce_dict['bounce_time'] = bounce.occurred
-            bounce_dict['bounce_message'] = bounce.message
             bounce_dict['person_id'] = bounce.person.key()
             
 
@@ -610,12 +633,14 @@ class GClient(object):
             optout_dict = optout.person.asDict()
 
             # Adjust some keys, add additional key/values
-            optout_dict['optout_occurred'] = optout.occurred
-            optout_dict['optout_reason'] = optout.reason
+            optout_dict['occurred'] = optout.occurred
+            optout_dict['reason'] = optout.reason
             optout_dict['person_id'] = optout.person.key()
             
 
             optout_row = self.personDictToRow(optout_dict)
+            # DEBUGGING
+            logging.info(optout_row.ToString())
             self.spreadsheetsClient.AddListEntry(optout_row, ngsid, nbsid)
 
         return (new_spreadsheet, new_raw_sheet)
