@@ -8,7 +8,7 @@ from google.appengine.api import mail
 from StringIO import StringIO
 from ..models import Batch
 
-csvs_ready_template= 'signupVerifier/processors/csvs_ready_to_upload.html'
+csvs_ready_template= 'signupVerifier/processors/csvs_ready_for_upload.html'
 
 ordered_person_attributes_for_upload = [                                        
     'group_id',                                                                 
