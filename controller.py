@@ -216,6 +216,30 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
 
+from bounce_handler import BounceHandler
+from google.appengine.ext.webapp.mail_handlers import BounceNotification
+class TestBouncePage(webapp2.RequestHandler):
+
+    def get(self):
+        """
+            Simply takes received arguments and passes them on the Bounce
+            Handler.
+        """
+        bounce = BounceNotification({
+            'original-from': self.request.get('original-from'),
+            'original-to': self.request.get('original-to'),
+            'original-subject': self.request.get('original-subject'),
+            'original-text': self.request.get('original-text'),
+            'notification-from': self.request.get('notification-from'),
+            'notification-to': self.request.get('notification-to'),
+            'notification-subject': self.request.get('notification-subject'),
+            'notification-text': self.request.get('notification-text'),
+            'raw-message': self.request.get('raw-message')
+            })
+        
+        bh = BounceHandler()
+        return bh.receive(bounce)
+
 class OptOutPage(webapp2.RequestHandler):
 
     # Opt-Out Page
@@ -348,7 +372,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             
 
 app = webapp2.WSGIApplication([('/', SpreadsheetInitialPage),
-                                ('/test', TestPage),
+                                ('/test_bounce', TestBouncePage),
                                 ('/optout', OptOutPage),
                                 ('/followup', SpreadsheetFollowupPage)],
                               debug=True)
