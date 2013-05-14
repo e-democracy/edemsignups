@@ -174,7 +174,8 @@ class OptOut(db.Model):
 
 class Bounce(db.Model):
     """ Record of a bounce"""
-    person = db.ReferenceProperty(Person, required = True)
+    person = db.ReferenceProperty(Person, required = True,
+                                collection_name='bounces')
     batch = db.ReferenceProperty(Batch, required = True, 
                                  collection_name='bounces')
     message = db.TextProperty()
