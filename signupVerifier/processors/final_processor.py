@@ -7,6 +7,7 @@ from google.appengine.api import mail
 
 from StringIO import StringIO
 from ..models import Batch
+from ..settings import settings
 
 csvs_ready_template= 'signupVerifier/processors/csvs_ready_for_upload.html'
 
