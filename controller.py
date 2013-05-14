@@ -8,7 +8,10 @@ from signupVerifier.processors.initial_processor import importBatch,\
                     importPerson, addBatchChange, addPersonChange,\
                     sendVerificationEmails 
 from signupVerifier.processors.optout_processor import createOptOutToken,\
-                    getPersonByOptOutToken, processOptOut
+                    getPersonByOptOutToken, processOptOut,\
+                    removeAllOptOutTokensFromBatches
+from signupVerifier.processors.final_processor import getSuccessfulSignups,\
+                    getBatches, emailFollowUpsToStaff, personsToCsv, emailCsvs
 from signupVerifier.models import Person
 from signupVerifier.settings import settings
 
@@ -373,6 +376,6 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([('/', SpreadsheetInitialPage),
                                 ('/test_bounce', TestBouncePage),
-                                ('/optout', OptOutPage),
+                                ('/optout', OptOutPage, name='optout'),
                                 ('/followup', SpreadsheetFollowupPage)],
                               debug=True)
