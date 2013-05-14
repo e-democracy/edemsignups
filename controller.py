@@ -45,7 +45,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         batch_logs = []
         def new_batch_log(meta_dict, spreadsheet_url):
             return {'meta_dict' : meta_dict, 'spreadsheet_url': spreadsheet_url,
-                    'error': None, 'persons_success': [], 'persons_fail': []}
+                    'error': None, 'persons_success': [], 'persons_fail': [],
+                    'errors_sheet_url': None}
 
         # 1.) Get list of all spreadsheets in folder 
         signups_folder = self.gclient.docsClient.GetResourceById(
@@ -109,6 +110,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             persons = []
             optout_tokens = dict()
+            validations_spreadsheet = None
+            validations_worksheet = None
             for person_list_entry in person_list_feed:
                 # Because of how the Full Name column is a formula output that
                 # always includes an empty space, we need to first check that
@@ -140,6 +143,15 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
                     # TODO Add the row to a spreadsheet for validation errors,
                     # and create that spreadsheet if it doesn't exist.
+                    if not validations_worksheet:
+                        validations_spreadsheet, validations_worksheet = \
+                            self.gclient.createValidationErrorsSpreadsheet(
+                                                                        batch)
+                        batch_log['errors_sheet_url'] =\
+                                    validations_spreadsheet.FindHtmlLink()
+                    self.gclient.AddListEntry(person_list_entry,
+                                spreadsheet_id(validations_spreadsheet),
+                                worksheet_id(validations_worksheet))
                     continue
 
                 person_dict = self.gclient.personRowToDict(person_list_entry)
@@ -192,7 +204,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     'event_name': batch_log['meta_dict']['event_name'],
                     'event_date': batch_log['meta_dict']['event_date'],
                     'successful_persons' : [],
-                    'failed_persons': []}
+                    'failed_persons': [],
+                    'errors_sheet_url': batch_log['errors_sheet_url'}
                 for person in batch_log['persons_success']:
                     successful_batch['successful_persons'].append({
                         'email' : person.email,
