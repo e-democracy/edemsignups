@@ -92,7 +92,7 @@ def personsToCsv(persons):
     csv_string = StringIO()
     dict_writer = csv.DictWriter(csv_string,
                                     ordered_person_attributes_for_upload)
-    dict_wirter.writer.writerow(ordered_person_attributes_for_upload)
+    dict_writer.writer.writerow(ordered_person_attributes_for_upload)
     for person in persons:
         person = person.asDict()
         forums = person['forums']
