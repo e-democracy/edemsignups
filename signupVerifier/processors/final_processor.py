@@ -90,8 +90,8 @@ def personsToCsv(persons):
     Input:  persons - a list of Person instances.
     Output: a CSV.
     """
-    csv_string = StringIO()
-    dict_writer = csv.DictWriter(csv_string,
+    csv_buffer = StringIO()
+    dict_writer = csv.DictWriter(csv_buffer,
                                     ordered_person_attributes_for_upload)
     dict_writer.writer.writerow(ordered_person_attributes_for_upload)
     for person in persons:
@@ -102,6 +102,8 @@ def personsToCsv(persons):
             person['group_id'] = forum
             dict_writer.writer.writerows(person)
 
+    csv_string = csv_buffer.getvalue()
+    csv_buffer.close()
     return csv_string
 
 
