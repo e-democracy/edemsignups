@@ -374,8 +374,9 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         emailCsvs(csvs) 
             
 
-app = webapp2.WSGIApplication([('/', SpreadsheetInitialPage),
-                                ('/test_bounce', TestBouncePage),
-                                ('/optout', OptOutPage, name='optout'),
-                                ('/followup', SpreadsheetFollowupPage)],
+app = webapp2.WSGIApplication([
+                ('/', SpreadsheetInitialPage),
+                ('/test_bounce', TestBouncePage),
+                webapp2.Route('/optout', handler=OptOutPage, name='optout'),
+                ('/followup', SpreadsheetFollowupPage)],
                               debug=True)
