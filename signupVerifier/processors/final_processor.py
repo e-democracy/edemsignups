@@ -9,6 +9,10 @@ from StringIO import StringIO
 from ..models import Batch
 from ..settings import settings
 
+import logging
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 csvs_ready_template= 'signupVerifier/processors/csvs_ready_for_upload.html'
 
 ordered_person_attributes_for_upload = [                                        
@@ -92,18 +96,20 @@ def personsToCsv(persons):
     """
     csv_buffer = StringIO()
     dict_writer = csv.DictWriter(csv_buffer,
-                                    ordered_person_attributes_for_upload)
-    dict_writer.writer.writerow(ordered_person_attributes_for_upload)
+                                    ordered_person_attributes_for_upload,
+                                    extrasaction='ignore')
+    dict_writer.writeheader()
     for person in persons:
         person = person.asDict()
         forums = person['forums']
         del person['forums']
         for forum in forums:
             person['group_id'] = forum
-            dict_writer.writer.writerows(person)
+            dict_writer.writerow(person)
 
     csv_string = csv_buffer.getvalue()
     csv_buffer.close()
+    logging.info(csv_string)
     return csv_string
 
 
