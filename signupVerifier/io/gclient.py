@@ -135,30 +135,33 @@ class GClient(object):
             Input: d - a dict that represents information about a person
             Output: A ListRow instance containing the data of d
         """
+        #Casting
+        def cast_datetime_to_str(dti):
+            return dti.strftime('%m/%d/%Y %H:%M:%S')
+        if 'occurred' in d and isinstance(d['occurred'], dt.datetime):
+            d['occurred'] = cast_datetime_to_str(d['occurred'])
+
         # Clean/rearrange keys
         for dict_key, row_key in person_key_map.iteritems():
             if dict_key in d:
                 if d[dict_key]:
-                    d[row_key] = '%s' % d[dict_key]
+                    d[row_key] = d[dict_key]
                 del d[dict_key]
         for i,forum in enumerate(d['forums']):
             d['forum%s' % (i+1)] = forum
         del d['forums']
         if 'source_batch' in d:
             del d['source_batch']
+
+        # Make sure that all attributes are strings and not None
         keys = d.keys()
         for key in keys:
             if not d[key]:
                 del d[key]
+            else:
+                d[key] = '%s' % d[key]
 
-        #Casting
-        def cast_datetime_to_str(dti):
-            return dti.strftime('%m/%d/%Y %H:%M:%S')
-        if 'occurred' in d and isinstance(d['occurred'], dt.datetime):
-            d['occurred'] = cast_datetime_to_str(d['occurred'])
-        if 'personid' in d and isinstance(d['personid'], Key):
-            d['personid'] = '%s' % d['personid'].id()
-
+        
         return self.dictToRow(d)
 
     def rowToDict(self, r):
