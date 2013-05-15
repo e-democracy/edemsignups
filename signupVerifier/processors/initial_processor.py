@@ -206,10 +206,11 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
 
             email_body = template.render(verification_email_template_path,
                                     template_values)
-            mail.send_mail(settings['email_as'],
-                        template_values['email'],
-                        settings['verification_subject'],
-                        email_body)
+            message = mail.EmailMessage(sender=settings['email_users_as'],
+                                    subject=settings['verification_subject'])
+            message.to = template_values['email']
+            message.html = email_body
+
             if batch_log:
                 batch_log['persons_success'].append(person)
         except Exception as e:
