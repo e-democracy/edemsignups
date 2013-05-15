@@ -1,0 +1,25 @@
+Hello,
+
+The E-Democracy Signup Verifier has processed a set of new signups that include signups you submitted.
+{% if failed_batches %}
+The following batches encountered errors while processing their metadata. People in these batches where not emailed.
+{% for failed_batch in failed_batches %}
+ - {{ failed_batch.event_name }} on {{ failed_batch.event_date }}: {{ failed_batch.url }}
+      Error: {{ failed_batch.error }}
+{% endfor %}
+Due to errors in batch metadata, these batches were not processed. Please use the links above to find the spreadsheets and address the errors indicated above.
+{% endif %}{% if successful_batches %}
+{% for successful_batch in successful_batches %}
+ - {{ successful_batch.event_name }} on {{ successful_batch.event_date }}: {{ successful_batch.url }}
+{% if successful_batch.successful_persons %}
+      The following addresses were emailed (this does not mean they are verified, they may still bounce or opt out): {% for successful_person in successful_batch.successful_persons %}
+        + {{ successful_person.email }} - {{ successful_person.full_name }}
+{% endfor %}{% endif %}{% if successful_batch.failed_persons %}
+      The following addresses were not emailed due to an error:{% for failed_person in successful_batch.failed_persons %}
+        + {{ failed_person.email }} - {{ failed_person.full_name }}
+              Error: {{ failed_person.error }}
+{% endfor %}
+        A spreadsheet containing these entries with errors can be downloaded at {{ successful_batch.errors_sheet_url }}
+{% endif %}
+{% endfor %}
+{% endif %}
