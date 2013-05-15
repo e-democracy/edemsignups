@@ -2,6 +2,7 @@
 
 from ..models import Batch, Person, OptOutToken, OptOut 
 from google.appengine.ext.db import delete as modelDelete
+import datetime as dt
 
 def createOptOutToken(batch, person):
     """
@@ -98,6 +99,31 @@ def createOptOut(person, batch, reason):
                     reason=reason)
     optout.put()
     return optout 
+
+def createOptOutFromEmailAddress(address, message, optout_datetime=None):
+    """
+    Creates an optout record for the address that sent this message. The 
+    provided address will be used to lookup the corresponding Person instance
+    that was created in the last two days. If provided, optout_datetime will be
+    recorded as the time the optout was received. Otherwise, the datetime of 
+    writing to the DB will be recorded as the optout time.
+
+    Input:  address - the email address that wants to optout. This will be used
+                        to find an associated Person instance.
+            message - a string representing the optout message received.
+            optout_datetime - datetime that the optout was received
+    Output: an Optout model created by the logging of the Optout.
+    Side Effect: an entry is saved to the database for the opt-out
+    Throws: LookupError if a Person can not be found based on the provided
+            address.
+    """
+    q = Person.all()
+    q.filter('email =', address)
+    q.filter('created >=', dt.datetime.now() - dt.timedelta(days=2)) 
+    person = q.get()
+    if not person:
+        raise LookupError('No person with address %s found.' % address)
+    return createOptout(person, person.source_batch, message, optout_datetime)
 
 def processOptOut(token, reason):
     """
