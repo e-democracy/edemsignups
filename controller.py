@@ -3,7 +3,7 @@
 import webapp2
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-from signupVerifier.io.gclient import GClient
+from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id
 from signupVerifier.processors.initial_processor import importBatch,\
                     importPerson, addBatchChange, addPersonChange,\
                     sendVerificationEmails 
@@ -149,7 +149,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                                                         batch)
                         batch_log['errors_sheet_url'] =\
                                     validations_spreadsheet.FindHtmlLink()
-                    self.gclient.AddListEntry(person_list_entry,
+                    self.gclient.spreadsheetsClient.AddListEntry(
+                                person_list_entry,
                                 spreadsheet_id(validations_spreadsheet),
                                 worksheet_id(validations_worksheet))
                     continue
@@ -205,7 +206,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     'event_date': batch_log['meta_dict']['event_date'],
                     'successful_persons' : [],
                     'failed_persons': [],
-                    'errors_sheet_url': batch_log['errors_sheet_url'}
+                    'errors_sheet_url': batch_log['errors_sheet_url']}
                 for person in batch_log['persons_success']:
                     successful_batch['successful_persons'].append({
                         'email' : person.email,
