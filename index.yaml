@@ -1,1 +1,6 @@
 indexes:
+
+- kind: Person
+  properties:
+  - name: email
+  - name: created
