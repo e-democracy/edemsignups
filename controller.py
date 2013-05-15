@@ -17,6 +17,7 @@ from signupVerifier.settings import settings
 
 import logging
 log_template = 'templates/log_template.html'
+log_template_text = 'templates/log_template.txt'
 optout_reason_template = 'templates/optout_request_reason.html'
 optout_confirm_template = 'templates/optout_confirm.html'
 followup_template = 'templates/followup_template.html'
@@ -229,7 +230,17 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
         retval = ''
         for email, template_values in staff_templates.iteritems():
-            retval += template.render(log_template, template_values)
+            email_body = template.render(log_template, template_values)
+            email_text_body = template.render(log_template_text,
+                                                            template_values)
+            message = mail.EmailMessage(sender=settings['email_as'],
+                                subject='Submitted Signups - Initial Results')
+            message.to = email
+            message.html = email_body
+            message.body = email_text_body
+            message.send()
+
+            retval += email_body
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
 
@@ -389,8 +400,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             
 
 app = webapp2.WSGIApplication([
-                ('/', SpreadsheetInitialPage),
+                ('/spreadsheet_initial', SpreadsheetInitialPage),
                 ('/test_bounce', TestBouncePage),
                 webapp2.Route('/optout', handler=OptOutPage, name='optout'),
-                ('/followup', SpreadsheetFollowupPage)],
+                ('/spreadsheet_followup', SpreadsheetFollowupPage)],
                               debug=True)
