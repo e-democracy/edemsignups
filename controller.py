@@ -1,5 +1,6 @@
 # coding=utf-8
 
+import datetime as dt
 import webapp2
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
@@ -347,10 +348,17 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             return {'optouts': [],
                     'bounces': []}
 
+        before = None
+        if self.request.get('before') == 'now':
+            before = dt.datetime.now()
+
         # Follow Up Script
         #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
         #   2.) Get associated Batches
-        batches = [bs.batch for bs in self.gclient.getBatchSpreadsheets()]
+        batches = [bs.batch for bs in
+                    self.gclient.getBatchSpreadsheets(before=before)]
+        if not batches:
+            return
         staff_followups = dict()
         successes = []
         for batch in batches:
