@@ -24,7 +24,6 @@ class OptOutHandler(InboundMailHandler):
             message += "\n\n"
         address = mail_message.sender
         logging.info('Received OptOut from %s' % address)
-        logging.info('Reason: %s' % message)
 
         # Save the optout to the DB
         bounce = createOptOutFromEmailAddress(address, message)
