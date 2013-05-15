@@ -210,6 +210,7 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
                                     subject=settings['verification_subject'])
             message.to = template_values['email']
             message.html = email_body
+            message.send()
 
             if batch_log:
                 batch_log['persons_success'].append(person)
