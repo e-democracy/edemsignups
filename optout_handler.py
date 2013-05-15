@@ -22,7 +22,13 @@ class OptOutHandler(InboundMailHandler):
             else:
                 message += body.payload
             message += "\n\n"
-        address = mail_message.sender
+
+        email_re = "<(.*)>"
+        matched = re.search(email_re, mail_message.sender)
+        if matched:
+            address = matched.group(1)
+        else:
+            address = mail_message.sender
         logging.info('Received OptOut from %s' % address)
 
         # Save the optout to the DB
