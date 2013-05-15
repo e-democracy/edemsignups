@@ -6,10 +6,15 @@ threadsafe: true
 
 inbound_services:
 - mail_bounce
+- mail
 
 handlers:
 - url: /_ah/bounce
   script: bounce_handler.app
+  login: admin
+
+- url: /_ah/mail/optout@edemsignups\.appspotmail\.com
+  script: optout_handler.app
   login: admin
 
 - url: /.*
