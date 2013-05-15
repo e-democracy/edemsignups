@@ -1,4 +1,5 @@
 # coding=utf-8
+import re
 import webapp2
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from signupVerifier.processors.optout_processor import \
