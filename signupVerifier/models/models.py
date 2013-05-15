@@ -79,6 +79,7 @@ class BatchChange(db.Model):
 class Person(db.Model):
     """ A person who signed up during an event, along with captured information
     about that person."""
+    created = db.DateTimeProperty(required = True, auto_now_add = True)
     email = db.EmailProperty(required = True)
     first_name = db.StringProperty(required = True)
     last_name = db.StringProperty(required = True)
