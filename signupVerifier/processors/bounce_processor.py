@@ -51,6 +51,7 @@ def createBounceFromEmailAddress(address, message, bounce_datetime=None):
     """
     q = Person.all()
     q.filter('email =', address)
+    q.filter('created >=', dt.datetime.now() - dt.timedelta(days=2))
     person = q.get()
     if not person:
         raise LookupError('No person with address %s found.' % address)
