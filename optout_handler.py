@@ -2,7 +2,7 @@
 import webapp2
 from google.appengine.ext.webapp.mail_handlers import InboundMailHandler
 from signupVerifier.processors.optout_processor import \
-                                        createOptoutFromEmailAddress
+                                        createOptOutFromEmailAddress
 
 import logging
 
@@ -15,11 +15,18 @@ class OptOutHandler(InboundMailHandler):
             address (created within the previous two days), and submit the
             optout.
         """
-        message = mail_message.bodies('text/plain')
+        message = ""
+        for content_type, body in mail_message.bodies('text/plain'):
+            if body.encoding:
+                message += body.payload.decode(body.encoding)
+            else:
+                message += body.payload
+            message += "\n\n"
         address = mail_message.sender
         logging.info('Received OptOut from %s' % address)
+        logging.info('Reason: %s' % message)
 
         # Save the optout to the DB
-        bounce = createOptoutFromEmailAddress(address, message)
+        bounce = createOptOutFromEmailAddress(address, message)
 
 app = webapp2.WSGIApplication([OptOutHandler.mapping()], debug=True)
