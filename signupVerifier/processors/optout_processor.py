@@ -4,6 +4,8 @@ from ..models import Batch, Person, OptOutToken, OptOut
 from google.appengine.ext.db import delete as modelDelete
 import datetime as dt
 
+import logging
+
 def createOptOutToken(batch, person):
     """
     Generates an opt-out token for the provided person, saves that token
