@@ -112,7 +112,8 @@ def createOptOutFromEmailAddress(address, message, optout_datetime=None):
                         to find an associated Person instance.
             message - a string representing the optout message received.
             optout_datetime - datetime that the optout was received
-    Output: an Optout model created by the logging of the Optout.
+    Output: an Optout model created by the logging of the Optout, or False if
+            the address does not have associated OptOut Tokens
     Side Effect: an entry is saved to the database for the opt-out
     Throws: LookupError if a Person can not be found based on the provided
             address.
@@ -123,9 +124,13 @@ def createOptOutFromEmailAddress(address, message, optout_datetime=None):
     person = q.get()
     if not person:
         raise LookupError('No person with address %s found.' % address)
-    return createOptout(person, person.source_batch, message, optout_datetime)
+    token = person.optout_tokens.get()
+    if not token:
+        logging.info('Person with address %s has already opted out.' % address)
+        return False
+    return processOptOut(token, message, optout_datetime)
 
-def processOptOut(token, reason):
+def processOptOut(token, reason, optout_datetime=None):
     """
     Performs the database actions associated with a user opting out of
     performing an action indicated by the email that he/she received. This
