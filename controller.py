@@ -231,17 +231,18 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
         retval = ''
         for email, template_values in staff_templates.iteritems():
-            email_body = template.render(log_template, template_values)
-            email_text_body = template.render(log_template_text,
+            email_html = template.render(log_template, template_values)
+            email_text = template.render(log_template_text,
                                                             template_values)
-            message = mail.EmailMessage(sender=settings['email_as'],
-                                subject='Submitted Signups - Initial Results')
+            message = mail.EmailMessage(sender=settings['app_email_address'],
+                                subject=settings['subject_initial_staff'])
             message.to = email
-            message.html = email_body
-            message.body = email_text_body
+            message.cc = settings['signups_email_address']
+            message.html = email_html
+            message.body = email_text
             message.send()
 
-            retval += email_body
+            retval += email_html
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
 
