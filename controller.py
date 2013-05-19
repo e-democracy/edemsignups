@@ -18,8 +18,8 @@ from signupVerifier.settings import settings
 
 import logging
 
-log_template = 'templates/emails/initial_template.html'
-log_template_text = 'templates/emails/initial_template.txt'
+initial_template = 'templates/emails/initial_template.html'
+initial_template_text = 'templates/emails/initial_template.txt'
 optout_reason_template = 'templates/optout_request_reason.html'
 optout_confirm_template = 'templates/optout_confirm.html'
 followup_template = 'templates/emails/followup_template.html'
@@ -236,8 +236,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
         retval = ''
         for email, template_values in staff_templates.iteritems():
-            email_html = template.render(log_template, template_values)
-            email_text = template.render(log_template_text,
+            email_html = template.render(initial_template, template_values)
+            email_text = template.render(initial_template_text,
                                                             template_values)
             message = mail.EmailMessage(sender=settings['app_email_address'],
                                 subject=settings['subject_initial_staff'])
