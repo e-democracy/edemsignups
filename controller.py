@@ -17,6 +17,7 @@ from signupVerifier.models import Person
 from signupVerifier.settings import settings
 
 import logging
+
 log_template = 'templates/log_template.html'
 log_template_text = 'templates/log_template.txt'
 optout_reason_template = 'templates/optout_request_reason.html'
@@ -367,8 +368,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         #   4.) Get all Opt-Outs associated with Batches 
         #   5.) Get all Bounces associated with Bounces
             removeAllOptOutTokensFromBatches([batch])
-            optouts = batch.optouts.run()
-            bounces = batch.bounces.run()
+            optouts = batch.optouts.fetch(limit=None)
+            bounces = batch.bounces.fetch(limit=None)
             
         # 6.) For each Batch w/opt-out
             if optouts:
