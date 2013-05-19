@@ -357,8 +357,12 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         # Follow Up Script
         #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
         #   2.) Get associated Batches
-        batches = [bs.batch for bs in
+        if before:
+            batches = [bs.batch for bs in
                     self.gclient.getBatchSpreadsheets(before=before)]
+        else:
+            batches = [bs.batch for bs in self.gclient.getBatchSpreadsheets()]
+
         if not batches:
             return
         staff_followups = dict()
