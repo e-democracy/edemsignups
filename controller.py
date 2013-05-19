@@ -18,12 +18,12 @@ from signupVerifier.settings import settings
 
 import logging
 
-log_template = 'templates/log_template.html'
-log_template_text = 'templates/log_template.txt'
+log_template = 'templates/emails/initial_template.html'
+log_template_text = 'templates/emails/initial_template.txt'
 optout_reason_template = 'templates/optout_request_reason.html'
 optout_confirm_template = 'templates/optout_confirm.html'
-followup_template = 'templates/followup_template.html'
-followup_template_text = 'templates/followup_template.txt'
+followup_template = 'templates/emails/followup_template.html'
+followup_template_text = 'templates/emails/followup_template.txt'
 
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
