@@ -89,7 +89,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
                 logging.exception(e)
                 batch_log = new_batch_log({
-                            'staff_email': settings['username'],
+                            'staff_email': settings['admin_email_address'],
                             'event_name': 'ERROR',
                             'event_date': 'ERROR'
                             }, new_spreadsheet.FindHtmlLink())
@@ -184,7 +184,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             if 'staff_email' not in batch_log['meta_dict']:
                 # Staff person forgot to include their email address. Tell the
                 # tech guy.
-                staff_email = settings['username']
+                staff_email = settings['admin_email_address']
             else:
                 staff_email = batch_log['meta_dict']['staff_email']
 
