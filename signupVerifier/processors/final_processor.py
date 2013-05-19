@@ -109,7 +109,6 @@ def personsToCsv(persons):
 
     csv_string = csv_buffer.getvalue()
     csv_buffer.close()
-    logging.info(csv_string)
     return csv_string
 
 
