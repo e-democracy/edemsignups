@@ -399,6 +399,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                                 sender=settings['app_email_address'],
                                 subject=settings['subject_followup_staff'])
                 message.to = staff_address
+                message.cc = settings['signups_email_address']
                 message.html = email_html
                 message.send()
                 
