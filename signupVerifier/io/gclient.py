@@ -79,8 +79,8 @@ class GClient(object):
     def docsClient(self):
         if self.__docsClient__ is None:
             self.__docsClient__ = DocsClient()
-            self.__docsClient__.ClientLogin(settings['username'],
-                                settings['password'], 
+            self.__docsClient__.ClientLogin(settings['app_username'],
+                                settings['app_password'], 
                                 settings['app_name'])
 
         assert self.__docsClient__
@@ -90,8 +90,8 @@ class GClient(object):
     def spreadsheetsClient(self):
         if self.__spreadsheetsClient__ is None:
             self.__spreadsheetsClient__ = SpreadsheetsClient()
-            self.__spreadsheetsClient__.ClientLogin(settings['username'],
-                                settings['password'], 
+            self.__spreadsheetsClient__.ClientLogin(settings['app_username'],
+                                settings['app_password'], 
                                 settings['app_name'])
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
