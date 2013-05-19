@@ -8,7 +8,10 @@ from ..models import Batch, BatchChange, Person, PersonChange
 from ..models.utils import clone_entity
 
 
-verification_email_template_path = 'signupVerifier/processors/verification_email.html'
+verification_email_template = \
+                            'signupVerifier/processors/verification_email.html'
+verification_email_template_text = \
+                            'signupVerifier/processors/verification_email.txt'
 
 def importBatch(batch):
     """
@@ -201,10 +204,13 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
                 'full_name': person.full_name,
                 'email': person.email,
                 'optout_uri': uri_for('optout', token = optout_token.key(),
-                                        _full=True)
+                                        _full=True),
+                'subject': settings['subject_initial_user']
             }
 
-            email_html = template.render(verification_email_template_path,
+            email_html = template.render(verification_email_template,
+                                    template_values)
+            email_text = template.render(verification_email_template_text,
                                     template_values)
             message = mail.EmailMessage(sender=settings['app_email_address'],
                                     subject=settings['subject_initial_user'])
