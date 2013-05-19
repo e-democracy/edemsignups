@@ -139,10 +139,11 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 if validation_errors:
                     # Need to patch together a dict on an error.
                     # Blug, this is ugly
+                    errors_str = '; '.join(validation_errors)
                     batch_log['persons_fail'].append((
                         {'email':person_list_entry.get_value('email'),
                          'full_name':person_list_entry.get_value('fullname')
-                        }, '; '.join(validation_errors)))
+                        }, errors_str))
 
                     # TODO Add the row to a spreadsheet for validation errors,
                     # and create that spreadsheet if it doesn't exist.
@@ -152,6 +153,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                                                         batch)
                         batch_log['errors_sheet_url'] =\
                                     validations_spreadsheet.FindHtmlLink()
+
+                    person_list_entry.SetValue('Errors', errors_str)
                     self.gclient.spreadsheetsClient.AddListEntry(
                                 person_list_entry,
                                 spreadsheet_id(validations_spreadsheet),
