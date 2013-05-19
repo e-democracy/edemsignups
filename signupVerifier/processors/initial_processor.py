@@ -204,12 +204,13 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
                                         _full=True)
             }
 
-            email_body = template.render(verification_email_template_path,
+            email_html = template.render(verification_email_template_path,
                                     template_values)
-            message = mail.EmailMessage(sender=settings['email_users_as'],
-                                    subject=settings['verification_subject'])
+            message = mail.EmailMessage(sender=settings['app_email_address'],
+                                    subject=settings['subject_initial'])
             message.to = template_values['email']
-            message.html = email_body
+            message.reply_to = settings['optouts_email_address']
+            message.html = email_html
             message.send()
 
             if batch_log:
