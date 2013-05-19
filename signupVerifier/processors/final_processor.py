@@ -137,10 +137,13 @@ def emailCsvs(csvs, email_template=csvs_ready_template):
     Output: True if successful, False otherwise
     Side Effect: An email is sent to the provided address.
     """
-    email_body = template.render(email_template, {})
-    mail.send_mail(settings['email_as'],
-                    settings['admin_email'],
-                    'E-Democracy CSVs ready for Upload',
-                    email_body,
-                    attachments=csvs)
+    email_html = template.render(email_template, {})
+    message = mail.EmailMessage(sender=settings['app_email_address'],
+                                subject=settings['subject_csvsReady'])
+    message.to = settings['admin_email']
+    message.cc = settings['signups_email_address']
+    message.html = email_html
+    message.attachments = csvs
+    message.send()
+
     return True
