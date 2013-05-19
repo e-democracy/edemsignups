@@ -567,8 +567,6 @@ class GClient(object):
 
         ogsid = ogs.gsid
         batch_id = str(batch.key())
-        print "key: %s" % batch_id 
-
         
         headers_to_add = ['Occurred', 'Message', 'Person ID']
         (new_spreadsheet, new_raw_sheet) = self.cloneSpreadsheetForFailure(
