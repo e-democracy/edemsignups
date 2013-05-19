@@ -217,6 +217,7 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
             message.to = template_values['email']
             message.reply_to = settings['optout_email_address']
             message.html = email_html
+            message.body = email_text
             message.send()
 
             if batch_log:
