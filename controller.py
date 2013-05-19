@@ -23,6 +23,7 @@ log_template_text = 'templates/log_template.txt'
 optout_reason_template = 'templates/optout_request_reason.html'
 optout_confirm_template = 'templates/optout_confirm.html'
 followup_template = 'templates/followup_template.html'
+followup_template_text = 'templates/followup_template.txt'
 
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
@@ -403,12 +404,14 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         for staff_address,followup in staff_followups.iteritems():
             if followup['optouts'] or followup['bounces']:
                 email_html = template.render(followup_template, followup)
+                email_text = template.render(followup_template_text, followup)
                 message = mail.EmailMessage(
                                 sender=settings['app_email_address'],
                                 subject=settings['subject_followup_staff'])
                 message.to = staff_address
                 message.cc = settings['signups_email_address']
                 message.html = email_html
+                message.body = email_text
                 message.send()
                 
         #   9.) For each Batch

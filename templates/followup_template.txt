@@ -1,0 +1,11 @@
+Hello,
+
+The E-Democracy Signup Verifier has processed the results of signups submitted two days ago.
+
+{% if bounces %}The following batches had email addresses that bounced. For each batch, click the link next to the Name/Date of the event to download a spreadsheet that contains information on the bouncers.
+
+{% for batch, ss in bounces %}{{ batch.event_name }} on {{ batch.event_date }} - {{ ss.FindHtmlLink }}{% endfor %}
+{% endif %}
+{% if optouts %}The following batches had email addresses that opted out of signuping up. For each batch, click the Name/Date of the event to download a spreadsheet containing information about those who opted out.
+{% for batch, ss in bounces %}{{ batch.event_name }} on {{ batch.event_date }} - {{ ss.FindHtmlLink }}{% endfor %}
+{% endif %}
