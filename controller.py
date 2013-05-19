@@ -154,7 +154,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         batch_log['errors_sheet_url'] =\
                                     validations_spreadsheet.FindHtmlLink()
 
-                    person_list_entry.SetValue('Errors', errors_str)
+                    person_list_entry.set_value('errors', errors_str)
                     self.gclient.spreadsheetsClient.AddListEntry(
                                 person_list_entry,
                                 spreadsheet_id(validations_spreadsheet),
