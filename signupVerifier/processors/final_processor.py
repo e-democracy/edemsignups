@@ -140,7 +140,7 @@ def emailCsvs(csvs, email_template=csvs_ready_template):
     email_html = template.render(email_template, {})
     message = mail.EmailMessage(sender=settings['app_email_address'],
                                 subject=settings['subject_csvsReady'])
-    message.to = settings['admin_email']
+    message.to = settings['admin_email_address']
     message.cc = settings['signups_email_address']
     message.html = email_html
     message.attachments = csvs
