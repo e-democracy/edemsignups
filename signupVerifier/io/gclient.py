@@ -533,9 +533,11 @@ class GClient(object):
 
         ogsid = ogs.gsid
         batch_id = str(batch.key())
-        
+       
+        headers_to_add = ['Errors']
         (new_spreadsheet, new_raw_sheet) = self.cloneSpreadsheetForFailure(
-                                        ogsid, batch_id, " - Validation Errors")
+                                        ogsid, batch_id, " - Validation Errors",
+                                        headers_to_add)
 
         return (new_spreadsheet, new_raw_sheet)
 
