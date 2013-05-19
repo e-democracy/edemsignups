@@ -209,7 +209,7 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
             message = mail.EmailMessage(sender=settings['app_email_address'],
                                     subject=settings['subject_initial_user'])
             message.to = template_values['email']
-            message.reply_to = settings['optouts_email_address']
+            message.reply_to = settings['optout_email_address']
             message.html = email_html
             message.send()
 
