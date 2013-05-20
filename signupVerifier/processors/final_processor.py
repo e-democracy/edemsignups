@@ -125,21 +125,18 @@ def getSuccessfulSignups(batch):
         if not person.bounces.get() and not person.optouts.get():
             yield person
 
-def emailCsvs(csvs, batch_stats, email_template=csvs_ready_template):
+def emailCsvs(csvs, batches, email_template=csvs_ready_template):
     """
     Sends an email to the provided address that includes the provided list
     of CSVs. Also includes the provided stats as a report.
 
     Input:  csvs - a list of CSVs to be sent.
-            batch_stats - a list of two-tuples containing a name associated
-                          with a Batch and a dict of the Batch tracking 
-                          statistics: submitted_persons, invalid_persons, 
-                          optedout_persons, and bounced_persons.
+            batches - a list of Batch instances
             email_template - template used to generate the email body
     Output: True if successful, False otherwise
     Side Effect: An email is sent to the provided address.
     """
-    email_html = template.render(email_template, batch_stats)
+    email_html = template.render(email_template, batches)
     message = mail.EmailMessage(sender=settings['app_email_address'],
                                 subject=settings['subject_csvsReady'])
     message.to = settings['admin_email_address']
