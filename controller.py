@@ -421,7 +421,6 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                     staff_followups[batch.staff_email] = new_followup_struct()
                 optout_xlsx_url = build_xlsx_download_link(
                                     spreadsheet_id(ooss))
-                logging.info('optouts spreadsheet: %s' % optout_xlsx_url)
                 staff_followups[batch.staff_email]['optouts'].append(
                         (batch, optout_xlsx_url))
             #   7.) For each Batch with Bounce (GClients)
@@ -461,7 +460,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
         #   10.) Email Uploader (FinalProcessor)
         emailCsvs(csvs, batches)
-    
+ 
 
 app = webapp2.WSGIApplication([
         ('/spreadsheet_initial', SpreadsheetInitialPage),
