@@ -47,6 +47,15 @@ meta_key_map = {
     'prev_batch':'prevbatch'
 }
 
+# Keys that only appear in the Batch model, not in the ListRow
+meta_keys_model_only = [
+    'created',
+    'submitted_persons',
+    'invalid_persons',
+    'optedout_persons',
+    'bounced_persons'
+]
+
 person_key_map = {
     'first_name':'firstname',
     'last_name':'lastname',
@@ -122,8 +131,9 @@ class GClient(object):
             d[row_key] = d[dict_key]
             del d[dict_key]
 
-        if hasattr(d, 'created'):
-            del d['created']
+        for meta_key in meta_keys_model_only:
+            if hasattr(d, meta_key):
+                del d[meta_key]
 
         return self.dictToRow(d)
 
