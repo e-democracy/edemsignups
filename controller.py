@@ -145,10 +145,13 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                      not person_list_entry.get_value('fullname').strip())):
                     continue
 
+                batch.submitted_persons += 1
+
                 # Make sure we have some level of valid data
                 validation_errors = self.gclient.invalidPersonRow(
                                         person_list_entry)
                 if validation_errors:
+                    batch.invalid_persons += 1
                     # Need to patch together a dict on an error.
                     # Blug, this is ugly
                     errors_str = '; '.join(validation_errors)
@@ -193,6 +196,9 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # 4.) Generate and send Emails!
             batch_log = sendVerificationEmails(batch, persons, optout_tokens,
                             batch_log)
+
+        # Save the model with updated tracking
+        batch.put()
 
         # Process the batch_logs
         staff_templates = dict()
