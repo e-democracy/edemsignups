@@ -408,6 +408,11 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             optouts = batch.optouts.fetch(limit=None)
             bounces = batch.bounces.fetch(limit=None)
 
+            # Update Batch tracking
+            batch.optedout_persons = len(optouts)
+            batch.bounced_persons = len(bounces)
+            batch.put()
+
             # 6.) For each Batch w/opt-out
             if optouts:
                 # 1.) Clone associated Spreadsheet for Optouts (GClient)
@@ -455,7 +460,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 for batch, successful_signups in successes]
 
         #   10.) Email Uploader (FinalProcessor)
-        emailCsvs(csvs)
+        emailCsvs(csvs, batches)
     
 
 app = webapp2.WSGIApplication([
