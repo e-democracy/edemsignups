@@ -1,3 +1,4 @@
+{% autoescape off %}
 <p>Hello,</p>
 
 <p>Attached are CSVs that are ready to be uploaded.</p>
@@ -10,4 +11,4 @@
       <li>Bounced Persons: {{ batch.bounced_persons }}</li>
   </ul>
 {% endfor %}
-
+{% endautoescape %}

@@ -136,7 +136,7 @@ def emailCsvs(csvs, batches, email_template=csvs_ready_template):
     Output: True if successful, False otherwise
     Side Effect: An email is sent to the provided address.
     """
-    email_html = template.render(email_template, batches)
+    email_html = template.render(email_template, {'batches': batches})
     message = mail.EmailMessage(sender=settings['app_email_address'],
                                 subject=settings['subject_csvsReady'])
     message.to = settings['admin_email_address']
