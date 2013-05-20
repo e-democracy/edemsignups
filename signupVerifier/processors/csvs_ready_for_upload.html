@@ -1,4 +1,12 @@
-Hello,
+<p>Hello,</p>
 
-Attached are CSVs that are ready to be uploaded.
+<p>Attached are CSVs that are ready to be uploaded.</p>
+{% for name, stats in batch_stats %}
+  <p>Results for {{ name }}:</p>
+  <ul>
+    {% for k, v in stats %}
+      <li> {{ k }} : {{ v }}</li>
+    {% endfor %}
+  </ul>
+{% endfor %}
 
