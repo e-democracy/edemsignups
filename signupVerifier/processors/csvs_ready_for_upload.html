@@ -1,12 +1,13 @@
 <p>Hello,</p>
 
 <p>Attached are CSVs that are ready to be uploaded.</p>
-{% for name, stats in batch_stats %}
-  <p>Results for {{ name }}:</p>
+{% for batch in batches %}
+  <p>Results for {{ batch.event_name }} on {{ batch.event_date }} at {{ batch.event_location }} by {{ batch.staff_name}} ({{ batch.staff_email  }}):</p>
   <ul>
-    {% for k, v in stats %}
-      <li> {{ k }} : {{ v }}</li>
-    {% endfor %}
+      <li>Submitted Persons: {{ batch.submitted_persons }}</li>
+      <li>Invalid Persons: {{ batch.invalid_persons }}</li>
+      <li>Opted Out Persons: {{ batch.optedout_persons }}</li>
+      <li>Bounced Persons: {{ batch.bounced_persons }}</li>
   </ul>
 {% endfor %}
 
