@@ -1,3 +1,4 @@
+{% autoescape off %}
 <html>
   <body>
     Hello,
@@ -7,18 +8,19 @@
     {% if bounces %}
     <p>The following batches had email addresses that bounced. For each batch, click the Name/Date of the event to download a spreadsheet that contains information on the bouncers.</p>
     <ul>
-      {% for batch, ss in bounces %}
-        <li><a href="{{ ss.FindHtmlLink }}">{{ batch.event_name }} on {{ batch.event_date }}</a></li>
+      {% for batch, download_link in bounces %}
+        <li><a href="{{ download_link }}">{{ batch.event_name }} on {{ batch.event_date }}</a></li>
       {% endfor %}
     </ul>
     {% endif %}
     {% if optouts %}
     <p>The following batches had email addresses that opted out of signuping up. For each batch, click the Name/Date of the event to download a spreadsheet containing information about those who opted out.</p>
       <ul>
-      {% for batch, ss in bounces %}
-        <li><a href="{{ ss.FindHtmlLink }}">{{ batch.event_name }} on {{ batch.event_date }}</a></li>
+      {% for batch, download_link in optouts %}
+        <li><a href="{{ download_link }}">{{ batch.event_name }} on {{ batch.event_date }}</a></li>
       {% endfor %}
       </ul>
     {% endif %}
   </body>
 </html>
+{% endautoescape %}
