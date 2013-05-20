@@ -48,10 +48,10 @@ class Batch(db.Model):
     event_date = db.DateProperty()
     event_location = db.StringProperty()
     created = db.DateTimeProperty(required = True, auto_now_add = True)
-    submitted_persons = db.IntegerProperty()
-    invalid_persons = db.IntegerProperty()
-    optedout_persons = db.IntegerProperty()
-    bounced_persons = db.IntegerProperty()
+    submitted_persons = db.IntegerProperty(default=0)
+    invalid_persons = db.IntegerProperty(default=0)
+    optedout_persons = db.IntegerProperty(default=0)
+    bounced_persons = db.IntegerProperty(default=0)
     
 
     def asDict(self):
