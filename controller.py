@@ -2,6 +2,7 @@
 
 import datetime as dt
 import webapp2
+from urllib import urlencode
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
 from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id
@@ -24,6 +25,13 @@ optout_reason_template = 'templates/optout_request_reason.html'
 optout_confirm_template = 'templates/optout_confirm.html'
 followup_template = 'templates/emails/followup_template.html'
 followup_template_text = 'templates/emails/followup_template.txt'
+
+spreadsheet_export_url = \
+        'https://spreadsheets.google.com/feeds/download/spreadsheets/Export'
+
+def build_xlsx_download_link(gsid):
+    params = urlencode({'key':gsid, 'exportFormat':'xlsx'})
+    return '?'.join([spreadsheet_export_url, params])
 
 
 class SpreadsheetInitialPage(webapp2.RequestHandler):
@@ -94,7 +102,9 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                             'staff_email': settings['admin_email_address'],
                             'event_name': 'ERROR',
                             'event_date': 'ERROR'
-                            }, new_spreadsheet.FindHtmlLink())
+                            }, 
+                            build_xlsx_download_link(
+                                            spreadsheet_id(new_spreadsheet)))
                 batch_logs.append(batch_log)
                 batch_log['error'] = e
                 continue
@@ -153,7 +163,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                             self.gclient.createValidationErrorsSpreadsheet(
                                                                         batch)
                         batch_log['errors_sheet_url'] =\
-                                    validations_spreadsheet.FindHtmlLink()
+                                build_xlsx_download_link(
+                                    spreadsheet_id(validations_spreadsheet))
 
                     person_list_entry.set_value('errors', errors_str)
                     self.gclient.spreadsheetsClient.AddListEntry(

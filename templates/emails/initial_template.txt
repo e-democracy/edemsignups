@@ -1,3 +1,4 @@
+{% autoescape off %}
 Hello,
 
 The E-Democracy Signup Verifier has processed a set of new signups that include signups you submitted.
@@ -23,3 +24,4 @@ Due to errors in batch metadata, these batches were not processed. Please use th
 {% endif %}
 {% endfor %}
 {% endif %}
+{% endautoescape %}
