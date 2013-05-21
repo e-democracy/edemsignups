@@ -1,8 +1,7 @@
-<html>
-  <head>
-    <title>{{ subject }}</title>
-  </head>
-  <body>
+{% extends "base.html" %}
+{% block title %}{{ subject }}{% endblock %}
+
+{% block body%}
     <p>Hello {{ full_name }}!</p>
 
     <p>Thank you for signing up via a paper form to join a neighborhood forum with E-Democracy.Org.</p>
@@ -21,5 +20,4 @@
 
     <p>Bill Bushey</p>
     <p>E-Democracy Technology Coordinator</p>
-  </body>
-</html>
+{% endblock %}
