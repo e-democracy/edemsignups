@@ -20,7 +20,17 @@ Due to errors in batch metadata, these batches were not processed. Please use th
         + {{ failed_person.email }} - {{ failed_person.full_name }}
               Error: {{ failed_person.error }}
 {% endfor %}
-        A spreadsheet containing these entries with errors can be downloaded at {{ successful_batch.errors_sheet_url }}
+        A spreadsheet containing these entries with errors can be downloaded at
+        
+        *Tips for dealing with errors*
+         Here are some tips for dealing with the errors that you might encoutner in this spreadsheet:
+         "Missing email address": There is no email address entered for the person. Refer back to the signup sheet for this person and enter an email address from that sheet in the Email. If there is no email address on the sheet, then delete the row for this person.
+         "Malformed email address": The email address entered for the person is not formatted correctly. All email addresses must contain some letters or numbers, then the at sign (@), then some letters or numbers, then a period (.), and finally some letters or numbers. Refer back to the signup sheet for the person and carefully enter the email address found on that sheet. If the sheet does not contain a proper email address, than delete the row for this person from the spreadsheet.
+         "Missing first name": No first name was entered for this person. Refer back to the signup sheet and enter the first name found on that sheet into the First Name column of the spreadsheet for this person. If no first name is on the spreadsheet, enter 'None' in the First Name column for this person in the spreadsheet.
+         "Missing last name": No last name was entered for this person. Refer back to the signup sheet and enter the last name found on that sheet into the Last Name column of the spreadsheet for this person. If no last name is on the spreadsheet, enter 'None' in the Last Name column for this person in the spreadsheet.
+         "Missing full name": No full name was entered for this person. The spreadsheet should automatically set the Full Name column based on what is in the First Name and Last Name columns for this person. So first check that the First Name and Last Name columns are filled out for this person. If they are, then manually enter a Full Name for this person based on the First Name and Last Name columns.
+         "No forums selected for the user": There are ten columns at the far right of the spreadsheet where you can select the forums that the person wishes to signup for. At least one of these columns must contain a forum selection for the person. Review the signup sheet for this person and the Forum columns at the far right of the spreadsheet, and make sure that all of the forums that are selected on the signup sheet are selected in the Forum columns.
+{{ successful_batch.errors_sheet_url }}
 {% endif %}
 {% endfor %}
 {% endif %}

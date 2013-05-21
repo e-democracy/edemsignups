@@ -6,7 +6,7 @@
     <p>The E-Democracy Signup Verifier has processed a set of new signups that include signups you submitted.</p>
 
     {% if failed_batches %}
-    The following batches encountered errors while processing their metadata. People in these batches where not emailed.
+    The following batches encountered errors while processing their coversheet. People in these batches where not emailed.
     <ul>
       {% for failed_batch in failed_batches %}
         <li><a href="{{ failed_batch.url }}">{{ failed_batch.event_name }} on {{ failed_batch.event_date }}</a>
@@ -14,7 +14,7 @@
         </li>
       {% endfor %}
     </ul>
-    <p>Due to errors in batch metadata, these batches were not processed. Please use the links above to find the spreadsheets and address the errors indicated above.</p>
+    <p>Due to errors on the coversheet, these batches were not processed. Please use the links above to find the spreadsheets and address the errors indicated above.</p>
     {% endif %}
     {% if successful_batches %}
       {% for successful_batch in successful_batches %}
@@ -28,7 +28,7 @@
           </ul>
         {% endif %}
         {% if successful_batch.failed_persons %}
-          <p>The following addresses were not emailed due to an error:</p>
+          <p>The following addresses were not emailed due to errors:</p>
           <ul>
           {% for failed_person in successful_batch.failed_persons %}
             <li> {{ failed_person.email }} - {{ failed_person.full_name }}
@@ -36,7 +36,23 @@
             </li>
           {% endfor %}
           </ul>
-          A spreadsheet containing these entries with errors can be downloaded at <a href="{{ successful_batch.errors_sheet_url }}">here</a>.
+          <p>A spreadsheet containing these entries with errors can be downloaded at <a href="{{ successful_batch.errors_sheet_url }}">here</a>.</p>
+          <p style="margin-top: 5px;"><i>Tips for dealing with errors</i></p>
+          <p>Here are some tips for dealing with the errors that you might encoutner in this spreadsheet</p>
+          <dl>
+            <dt>"Missing email address"</dt>
+            <dd>There is no email address entered for the person. Refer back to the signup sheet for this person and enter an email address from that sheet in the Email. If there is no email address on the sheet, then delete the row for this person.</dd>
+            <dt>"Malformed email address"</dt>
+            <dd>The email address entered for the person is not formatted correctly. All email addresses must contain some letters or numbers, then the at sign (@), then some letters or numbers, then a period (.), and finally some letters or numbers. Refer back to the signup sheet for the person and carefully enter the email address found on that sheet. If the sheet does not contain a proper email address, than delete the row for this person from the spreadsheet.</dd>
+            <dt>"Missing first name"</dt>
+            <dd>No first name was entered for this person. Refer back to the signup sheet and enter the first name found on that sheet into the First Name column of the spreadsheet for this person. If no first name is on the spreadsheet, enter 'None' in the First Name column for this person in the spreadsheet.</dd>
+            <dt>"Missing last name"</dt>
+            <dd>No last name was entered for this person. Refer back to the signup sheet and enter the last name found on that sheet into the Last Name column of the spreadsheet for this person. If no last name is on the spreadsheet, enter 'None' in the Last Name column for this person in the spreadsheet.</dd>
+            <dt>"Missing full name"</dt>
+            <dd>No full name was entered for this person. The spreadsheet should automatically set the Full Name column based on what is in the First Name and Last Name columns for this person. So first check that the First Name and Last Name columns are filled out for this person. If they are, then manually enter a Full Name for this person based on the First Name and Last Name columns.</dd>
+            <dt>"No forums selected for the user"</dt>
+            <dd>There are ten columns at the far right of the spreadsheet where you can select the forums that the person wishes to signup for. At least one of these columns must contain a forum selection for the person. Review the signup sheet for this person and the Forum columns at the far right of the spreadsheet, and make sure that all of the forums that are selected on the signup sheet are selected in the Forum columns.</dd>
+          </dl>
         {% endif %}
       {% endfor %}
     {% endif %}
