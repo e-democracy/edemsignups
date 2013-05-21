@@ -197,8 +197,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             batch_log = sendVerificationEmails(batch, persons, optout_tokens,
                             batch_log)
 
-        # Save the model with updated tracking
-        batch.put()
+            # Save the model with updated tracking
+            batch.put()
 
         # Process the batch_logs
         staff_templates = dict()
