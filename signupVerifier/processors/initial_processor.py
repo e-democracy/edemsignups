@@ -9,9 +9,9 @@ from ..models.utils import clone_entity
 
 
 verification_email_template = \
-                            'signupVerifier/processors/verification_email.html'
+    'signupVerifier/processors/templates/verification_email.html'
 verification_email_template_text = \
-                            'signupVerifier/processors/verification_email.txt'
+    'signupVerifier/processors/templates/verification_email.txt'
 
 def importBatch(batch):
     """

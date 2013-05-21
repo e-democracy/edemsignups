@@ -13,7 +13,8 @@ import logging
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-csvs_ready_template= 'signupVerifier/processors/csvs_ready_for_upload.html'
+csvs_ready_template = \
+    'signupVerifier/processors/templates/csvs_ready_for_upload.html'
 
 ordered_person_attributes_for_upload = [                                        
     'group_id',                                                                 
