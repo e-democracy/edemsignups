@@ -30,7 +30,12 @@ def verifyOrGet(cls, challenge):
 
     if isinstance(challenge, basestring):
         key = challenge
-        challenge = cls.get(key)
+
+        try:
+            challenge = cls.get(key)
+        except db.BadKeyError:
+            challenge = cls.get_by_id(long(key))
+
         if not (challenge and isinstance(challenge, cls)):
             raise LookupError('provided key could not be found: %s' %
                                 key)
