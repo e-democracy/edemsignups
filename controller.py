@@ -9,7 +9,7 @@ from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id
 from signupVerifier.processors.initial_processor import importBatch,\
     importPerson, addBatchChange, addPersonChange, sendVerificationEmails
 from signupVerifier.processors.optout_processor import createOptOutToken,\
-    getPersonByOptOutToken, processOptOut, removeAllOptOutTokensFromBatches
+    getPersonByOptOutToken, removeAllOptOutTokensFromBatches
 from signupVerifier.processors.final_processor import getSuccessfulSignups,\
     personsToCsv, emailCsvs
 from signupVerifier.models import Person
@@ -304,55 +304,6 @@ class TestBouncePage(webapp2.RequestHandler):
         bh = BounceHandler()
         return bh.receive(bounce)
 
-
-class OptOutPage(webapp2.RequestHandler):
-
-    # Opt-Out Page
-    #   1.) User Visits Opt-out Page (here)
-    #   2.) Script checks for Out-Out Token (OptOutProcessor)
-    #   3a.) If Exists
-    #       1.) Ask user for Reason (here)
-    #       2.) Enter Opt-Out (OptOutProcessor)
-    #       3.) Remove Opt-Out Token (OptOutProcessor)
-    #   3b.) Else
-    #       1.) Display Error (here)
-
-    def get(self):
-        self.handleRequest()
-
-    def post(self):
-        self.handleRequest()
-
-    def handleRequest(self):
-        params = self.request.params
-
-        # processOptOut and getPersonByOptOutToken will both throw LookupError
-        # if the provided token can not be found.
-        try:
-            if 'token' in params:
-                token = params['token']
-                logging.info('Got token %s' % token)
-                if 'reason' in params:
-                    reason = params['reason']
-                    optout = processOptOut(token, reason)
-                    # Display confirmation page
-                    retval = template.render(optout_confirm_template, {}) 
-                else:
-                    person = getPersonByOptOutToken(token)
-                    # Display page requesting reason for optout
-                    values = {'token': token}
-                    retval = template.render(optout_reason_template, values)
-            else:
-                # Display a 404
-                logging.info('No Token')
-                self.abort(404)
-
-            self.response.write(retval)
-
-        except LookupError as e:
-            #Display 404
-            self.abort(404)
-
 # Opt-Out Email Handler
 #   Assumes all replies are out-outs
 #   1.) Receives a reply (here)
@@ -465,6 +416,5 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
         ('/spreadsheet_initial', SpreadsheetInitialPage),
         ('/test_bounce', TestBouncePage),
-        webapp2.Route('/optout', handler=OptOutPage, name='optout'),
         ('/spreadsheet_followup', SpreadsheetFollowupPage)],
         debug=True)

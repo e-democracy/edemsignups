@@ -17,6 +17,9 @@ handlers:
   script: optout_handler.app
   login: admin
 
+- url: /optout
+  script: optout_page.app
+
 - url: /.*
   script: controller.app
   login: admin
