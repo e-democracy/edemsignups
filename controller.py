@@ -390,6 +390,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
         #   8.) For each staff with a downloadable spreadsheet, email download
         #       links w/directions (FinalProcessor)
+        retval = ""
         for staff_address, followup in staff_followups.iteritems():
             if followup['optouts'] or followup['bounces']:
                 email_html = template.render(followup_template, followup)
@@ -403,6 +404,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 message.body = email_text
                 message.send()
 
+                retval += email_html
+
         #   9.) For each Batch
         #       1.) Make a CSV of successful signups (FinalProcessor)
         csvs = [("%s - %s.csv" % (batch.event_name, batch.staff_name),
@@ -411,6 +414,10 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
         #   10.) Email Uploader (FinalProcessor)
         emailCsvs(csvs, batches)
+
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write(retval)
+
  
 
 app = webapp2.WSGIApplication([
