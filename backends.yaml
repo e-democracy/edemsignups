@@ -1,0 +1,4 @@
+backends:
+ - name: verifier
+   class: B1
+   options: dynamic, public
