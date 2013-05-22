@@ -203,8 +203,8 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
                 'last_name': person.last_name,
                 'full_name': person.full_name,
                 'email': person.email,
-                'optout_uri': uri_for('optout', token = optout_token.key(),
-                                        _full=True),
+                'optout_uri': uri_for('optout', token =
+                        optout_token.key().id(), _full = True),
                 'subject': settings['subject_initial_user']
             }
 
