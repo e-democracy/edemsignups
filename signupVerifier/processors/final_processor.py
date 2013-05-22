@@ -17,6 +17,7 @@ csvs_ready_template = \
     'signupVerifier/processors/templates/csvs_ready_for_upload.html'
 
 ordered_person_attributes_for_upload = [                                        
+    'notes',
     'group_id',                                                                 
     'email',                                                                    
     'first_name',                                                               
