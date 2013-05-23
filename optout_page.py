@@ -57,5 +57,5 @@ class OptOutPage(webapp2.RequestHandler):
             self.abort(404)
 
 
-app = webapp2.WSGIApplication([
-	webapp2.Route('/optout', handler=OptOutPage, name='optout')])
+routes =  [webapp2.Route('/optout', handler=OptOutPage, name='optout')]
+app = webapp2.WSGIApplication(routes=routes, debug=True)

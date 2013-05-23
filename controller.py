@@ -76,6 +76,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             try:
                 #  1.) Convert spreadsheets meta info to batch_dict
                 meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
+                if not meta_list_feed:
+                    raise LookupError('Coversheet contains no data')
                 meta_dict = self.gclient.metaRowToDict(meta_list_feed[0])
  
                 # 2.) Import meta_dict into Batch table
@@ -418,10 +420,10 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
 
- 
+routes =  [
+            ('/spreadsheet_initial', SpreadsheetInitialPage),
+            ('/test_bounce', TestBouncePage),
+            ('/spreadsheet_followup', SpreadsheetFollowupPage)
+          ]
 
-app = webapp2.WSGIApplication([
-        ('/spreadsheet_initial', SpreadsheetInitialPage),
-        ('/test_bounce', TestBouncePage),
-        ('/spreadsheet_followup', SpreadsheetFollowupPage)],
-        debug=True)
+app = webapp2.WSGIApplication(routes = routes, debug = True)
