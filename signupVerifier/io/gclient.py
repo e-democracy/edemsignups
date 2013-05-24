@@ -260,24 +260,41 @@ class GClient(object):
     # Google Drive Interaction Functions
     #####################################
 
+    def getWorksheet(self, spreadsheet, title):
+        """
+            Returns a Worksheet instance for the worksheet in the provided
+            spreadsheet of the provided title. This method assumes that a
+            spreadsheet should only have one worksheet of the provided title.
+
+            Input: spreadsheet - An instance of a Google Spreadsheet to retrive
+                                 a sheet from
+                   title - String indicating the title of the worksheet to get
+            Output: A worksheet instance if the desired worksheet can be found,
+                    None otherwise.
+            Throws: IndexError if there is more than one worksheet of the
+                    provided title.
+        """
+        sid = spreadsheet_id(spreadsheet)
+        sheets = self.spreadsheetsClient.GetWorksheets( sid,
+                    q=WorksheetQuery(title= title)
+                 ).entry
+        if not sheets:
+            return None
+        if len(sheets) != 1:
+            raise IndexError('Spreadsheet %s should have 1 %s sheet' \
+                                % (orig_spreadsheet_id, title)
+                            )
+        return sheets[0]
+        
+
     def rawSheetId(self, spreadsheet):
         """
             Returns the id of the Raw Worksheet for the provided spreadsheet
         """
         sid = spreadsheet_id(spreadsheet)
         if not sid in self.__rawSheetIds__:
-            raw_sheets = self.spreadsheetsClient.GetWorksheets(
-                            sid,
-                            q=WorksheetQuery(
-                                title=settings['raw_sheet_title']
-                            )
-                          ).entry
-            if len(raw_sheets) != 1:
-                raise IndexError('Spreadsheet %s should have 1 %s sheet' \
-                                % (orig_spreadsheet_id, 
-                                    settings['raw_sheet_title'])
-                            )
-            raw_sheet = raw_sheets[0]
+            raw_sheet = self.getWorksheet(spreadsheet,
+                            settings['raw_sheet_title'])
             self.__rawSheetIds__[sid] = worksheet_id(raw_sheet)
 
         assert self.__rawSheetIds__[sid]
@@ -318,8 +335,15 @@ class GClient(object):
                                  Meta sheet.
             Output: A ListFeed of the Meta sheet
         """
-        return self.getListFeed(spreadsheet, settings['meta_sheet_title'])
-        
+        meta_sheets = self.getListFeed(spreadsheet, 
+                        settings['meta_sheet_title'])
+        if len(meta_sheets) != 1:
+            raise IndexError('Spreadsheet %s should have exactly 1 %s sheet' \
+                                % (orig_spreadsheet_id, 
+                                    settings['meta_sheet_title'])
+                            )
+        return meta_sheets
+
     def getRawListFeed(self, spreadsheet):
         """
             Finds and retrieves the ListFeed for the Raw sheet in the provided
@@ -399,66 +423,38 @@ class GClient(object):
         rsid = self.rawSheetId(spreadsheet)
         return self.deleteFirstRow(sid, rsid)
 
-    def cloneRawSheet(self, new_spreadsheet_id, orig_spreadsheet_id, 
-                        headers_to_add):
+    def addRawSheetHeaders(self, new_spreadsheet, headers_to_add):
         """
-            Creates a new worksheet via the Google Spreadsheets API for people 
-            who were not successfully signed up. Its header row will be based 
-            on the header row of the worksheet associated with
-            orig_raw_sheet_id, plus headers_to_add.
-
+            Alters the headers of the Raw worksheet via the Google Spreadsheets
+            API for people who were not successfully signed up. Existing 
+            headers in the row will not be touched. headers_to_add will be
+            appended to the headers row.
             
-            Input:  new_spreadsheet_id - Google Drive ID of the new spreadsheet
-                    orig_spreadsheet_id - Drive ID of the original spreadsheet
+            Input:  new_spreadsheet - Instance of the new Google Spreadsheet
                     headers_to_add - A list of strings, representing headers
                                      that are to be added to the new 
-                                    spreadsheet's Raw sheet, in addition to 
-                                    headers from the original spreadsheet's Raw
-                                    sheet.
-            Output: A Worksheet instance associated with the newly created Raw
-                    worksheet on Drive.
-            Side Effects: A new worksheet, with its header row populated, will
-                          be created in the spreadsheet identified by 
-                          new_spreadsheet_id, on Drive.
+                                     spreadsheet's Raw sheet, in addition to 
+                                     headers from the original spreadsheet's 
+                                     Raw sheet.
+            Side Effects: The Raw sheet of new_spreadsheet will have
+                          headers_to_add appended to its header row.
         """
-        # 1.) Get the header row of the original spreadsheet's Raw sheet
-        orig_raw_sheets = self.spreadsheetsClient.GetWorksheets(
-                            orig_spreadsheet_id,
-                            q=WorksheetQuery(
-                                title=settings['raw_sheet_title']
-                            )
-                          ).entry
-        if len(orig_raw_sheets) != 1:
-            raise IndexError('Spreadsheet %s should have exactly 1 %s sheet' \
-                                % (orig_spreadsheet_id, 
-                                    settings['raw_sheet_title'])
-                            )
-        orig_raw_sheet = orig_raw_sheets[0]
-        orig_raw_sheet_id = worksheet_id(orig_raw_sheet)
-        orig_headers = self.spreadsheetsClient.GetCells(orig_spreadsheet_id, 
-                        orig_raw_sheet_id, q=CellQuery(1, 1)).entry
-                    
-        # 2.) Make a new worksheet with extra columns for the additional
-        # headers (and an arbitrary number of rows)
-        result = self.spreadsheetsClient.AddWorksheet(new_spreadsheet_id, 
-                                settings['raw_sheet_title'], 50, 
-                                len(orig_headers)+len(headers_to_add))
-        new_raw_sheet_id = worksheet_id(result)
-        new_raw_headers_update = BuildBatchCellsUpdate(new_spreadsheet_id,
-                                    new_raw_sheet_id)
+        ngsid = spreadsheet_id(new_spreadsheet)
+        nrsid = self.rawSheetId(new_spreadsheet)
 
-        # 3.) Insert the header cells of the original spreadsheet's Raw sheet 
-        # into the Raw sheet of the new spreadsheet, plus additional headers 
-        for i, cell in enumerate(orig_headers):
-            new_raw_headers_update.AddSetCell(1, i+1, cell.content.text)
+        # Determine the start and end positions of the headers to add
+        new_raw_headers = self.spreadsheetClient.GetCells(ngsid, nrsid,
+                            q=CellQuery(1, 1)).entry
+        new_headers_start = len(new_raw_headers) + 1
+        new_headers_end = new_headers_start + len(headers_to_add)
 
-        for j, cell in enumerate(headers_to_add):
-            new_raw_headers_update.AddSetCell(1, i+j+2, cell)
+        # Add the new headers
+        new_raw_headers_update = BuildBatchCellsUpdate(ngsid, nrsid)
+        for i, cell in enumerate(headers_to_add):
+            new_raw_headers_update.AddSetCell(1, new_headers_start + i, cell)
         self.spreadsheetsClient.batch(new_raw_headers_update, force=True)
 
-        return result
-
-
+        return True
 
     def cloneSpreadsheetForFailure(self, ogsid, batch_id, 
                                     suffix = None, headers_to_add = []):
@@ -500,15 +496,8 @@ class GClient(object):
 
 
         # Add the prev_batch column to the meta sheet of the new copy
-        new_meta_sheets = self.spreadsheetsClient.GetWorksheets(ngsid,
-                            q=WorksheetQuery(title=settings['raw_sheet_title'])
-                          ).entry
-        if len(new_meta_sheets) != 1:
-            raise IndexError('Spreadsheet %s should have exactly 1 %s sheet' \
-                                % (orig_spreadsheet_id, 
-                                    settings['meta_sheet_title'])
-                            )
-        new_meta_sheet = orig_raw_sheets[0]
+        new_meta_sheet = self.getWorksheet(new_spreadsheet,
+                            settings['meta_sheet_title'])
         nmsid = worksheet_id(new_meta_sheet)
         new_meta_headers = self.spreadsheetsClient.GetCells(ngsid, 
                             nmsid, q=CellQuery(1, 1)).entry
@@ -517,16 +506,20 @@ class GClient(object):
                             prev_header_pos)
         new_prev_header.cell.input_value = 'prevbatch'
         self.spreadsheetsClient.update(new_prev_header)
-                    
 
-        # TODO
         # Put the meta sheet values from the original spreadsheet into the new
         # spreadsheet, plus the prevbatch value
+        orgi_meta_feed = self.getMetaListFeed(original_spreadsheet)[0]
+        entry = orgi_meta_sheet[0]
+        entry.set_value('prevbatch', batch_id)
+        self.spreadsheetsClient.AddListEntry(entry, ngsid, nmsid)
 
         # TODO
+        # Add the additional headers to the Raw sheet
         # Create the cloned Raw sheet 
-        new_raw_sheet = self.cloneRawSheet(ngsid, ogsid, headers_to_add)
-
+        self.addRawSheetHeaders(new_spreadsheet, headers_to_add)
+        nrsid = self.rawSheetId(new_spreadsheet)
+        new_raw_sheet = self.docsClient.GetResourceById(nrsid)
         return (new_spreadsheet, new_raw_sheet)
 
     def createValidationErrorsSpreadsheet(self, batch):
