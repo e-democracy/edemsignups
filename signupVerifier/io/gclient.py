@@ -482,8 +482,10 @@ class GClient(object):
                 the Raw sheet of the newly created spreadsheet.
         """
         
-        # Get original spreadsheet
+        # Get original and base spreadsheets
         original_spreadsheet = self.docsClient.GetResourceById(ogsid)
+        base_spreadsheet = self.docsClient.GetResourceById(
+                            settings['base_spreadsheet_id'])
 
         # Get Failed Signups folder
         failed_signups_folder = self.docsClient.GetResourceById(
@@ -491,26 +493,37 @@ class GClient(object):
 
         # Create a new Spreadsheet in Failed Signups folder
         new_spreadsheet_title = original_spreadsheet.title.text + suffix
-        new_spreadsheet = Resource(type="spreadsheet",
-                                    title=new_spreadsheet_title)
-        new_spreadsheet = self.docsClient.CreateResource(new_spreadsheet,
-                                        collection=failed_signups_folder)
+        new_spreadsheet = self.docsClient.CopyResource(base_spreadsheet,
+                            new_spreadsheet_title)
+        self.docsClient.MoveResource(new_spreadsheet, failed_signups_folder)
         ngsid = spreadsheet_id(new_spreadsheet)
 
-        # Turn the default blank sheet into the Meta sheet
-        new_meta_sheet = self.spreadsheetsClient.GetWorksheets(ngsid,
-                            q=WorksheetQuery(title='Sheet 1')).entry[0]
-        new_meta_sheet.title.text = settings['meta_sheet_title']
-        self.spreadsheetsClient.Update(new_meta_sheet)
 
+        # Add the prev_batch column to the meta sheet of the new copy
+        new_meta_sheets = self.spreadsheetsClient.GetWorksheets(ngsid,
+                            q=WorksheetQuery(title=settings['raw_sheet_title'])
+                          ).entry
+        if len(new_meta_sheets) != 1:
+            raise IndexError('Spreadsheet %s should have exactly 1 %s sheet' \
+                                % (orig_spreadsheet_id, 
+                                    settings['meta_sheet_title'])
+                            )
+        new_meta_sheet = orig_raw_sheets[0]
         nmsid = worksheet_id(new_meta_sheet)
-        header_cell = self.spreadsheetsClient.GetCell(ngsid, nmsid, 1, 1)
-        header_cell.cell.input_value = 'prevbatch'
-        result = self.spreadsheetsClient.update(header_cell)
-        prev_batch_cell = self.spreadsheetsClient.GetCell(ngsid, nmsid, 2, 1)
-        prev_batch_cell.cell.input_value = batch_id
-        result = self.spreadsheetsClient.update(prev_batch_cell)
+        new_meta_headers = self.spreadsheetsClient.GetCells(ngsid, 
+                            nmsid, q=CellQuery(1, 1)).entry
+        prev_header_pos = len(new_meta_headers) + 1
+        new_prev_header = self.spreadsheetsClient.GetCell(ngsid, nmsid, 1, 
+                            prev_header_pos)
+        new_prev_header.cell.input_value = 'prevbatch'
+        self.spreadsheetsClient.update(new_prev_header)
+                    
 
+        # TODO
+        # Put the meta sheet values from the original spreadsheet into the new
+        # spreadsheet, plus the prevbatch value
+
+        # TODO
         # Create the cloned Raw sheet 
         new_raw_sheet = self.cloneRawSheet(ngsid, ogsid, headers_to_add)
 
