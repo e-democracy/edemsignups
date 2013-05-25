@@ -339,7 +339,7 @@ class GClient(object):
                         settings['meta_sheet_title'])
         if len(meta_sheets) != 1:
             raise IndexError('Spreadsheet %s should have exactly 1 %s sheet' \
-                                % (orig_spreadsheet_id, 
+                                % (spreadsheet_id(spreadsheet), 
                                     settings['meta_sheet_title'])
                             )
         return meta_sheets
@@ -443,7 +443,7 @@ class GClient(object):
         nrsid = self.rawSheetId(new_spreadsheet)
 
         # Determine the start and end positions of the headers to add
-        new_raw_headers = self.spreadsheetClient.GetCells(ngsid, nrsid,
+        new_raw_headers = self.spreadsheetsClient.GetCells(ngsid, nrsid,
                             q=CellQuery(1, 1)).entry
         new_headers_start = len(new_raw_headers) + 1
         new_headers_end = new_headers_start + len(headers_to_add)
@@ -451,7 +451,17 @@ class GClient(object):
         # Add the new headers
         new_raw_headers_update = BuildBatchCellsUpdate(ngsid, nrsid)
         for i, cell in enumerate(headers_to_add):
-            new_raw_headers_update.AddSetCell(1, new_headers_start + i, cell)
+            try:
+                new_header_pos = new_headers_start + i
+                new_raw_headers_update.AddSetCell(1, new_headers_start + i, cell)
+                new_header = self.spreadsheetsClient.GetCell(ngsid, nrsid, 1, 
+                            new_header_pos)
+                new_header.cell.input_value = cell
+                #self.spreadsheetsClient.update(new_header)
+            except Exception as e:
+                logging.exception(e)
+
+
         self.spreadsheetsClient.batch(new_raw_headers_update, force=True)
 
         return True
@@ -509,8 +519,8 @@ class GClient(object):
 
         # Put the meta sheet values from the original spreadsheet into the new
         # spreadsheet, plus the prevbatch value
-        orgi_meta_feed = self.getMetaListFeed(original_spreadsheet)[0]
-        entry = orgi_meta_sheet[0]
+        orgi_meta_feed = self.getMetaListFeed(original_spreadsheet)
+        entry = orgi_meta_feed[0]
         entry.set_value('prevbatch', batch_id)
         self.spreadsheetsClient.AddListEntry(entry, ngsid, nmsid)
 
@@ -519,7 +529,7 @@ class GClient(object):
         # Create the cloned Raw sheet 
         self.addRawSheetHeaders(new_spreadsheet, headers_to_add)
         nrsid = self.rawSheetId(new_spreadsheet)
-        new_raw_sheet = self.docsClient.GetResourceById(nrsid)
+        new_raw_sheet = self.spreadsheetsClient.GetWorksheet(ngsid, nrsid)
         return (new_spreadsheet, new_raw_sheet)
 
     def createValidationErrorsSpreadsheet(self, batch):

@@ -129,6 +129,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             optout_tokens = dict()
             validations_spreadsheet = None
             validations_worksheet = None
+            validations_listfeed = None
+            error_i = 0
             for person_list_entry in person_list_feed:
                 # Because of how the Full Name column is a formula output that
                 # always includes an empty space, we need to first check that
@@ -164,19 +166,26 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
                     # TODO Add the row to a spreadsheet for validation errors,
                     # and create that spreadsheet if it doesn't exist.
-                    if not validations_worksheet:
+                    if not validations_listfeed:
                         validations_spreadsheet, validations_worksheet = \
                             self.gclient.createValidationErrorsSpreadsheet(
                                 batch)
+                        vgsid = spreadsheet_id(validations_spreadsheet)
+                        vwsid = worksheet_id(validations_worksheet)
+                        validations_listfeed = \
+                                self.gclient.spreadsheetsClient.GetListFeed(
+                                    vgsid, vwsid).entry
                         batch_log['errors_sheet_url'] =\
                                 build_xlsx_download_link(
                                     spreadsheet_id(validations_spreadsheet))
 
-                    person_list_entry.set_value('errors', errors_str)
-                    self.gclient.spreadsheetsClient.AddListEntry(
-                            person_list_entry,
-                            spreadsheet_id(validations_spreadsheet),
-                            worksheet_id(validations_worksheet))
+                    error_entry = validations_listfeed[error_i]
+                    logging.info(error_entry)
+                    error_i += 1
+                    error_entry.from_dict(person_list_entry.to_dict())
+                    error_entry.set_value('errors', errors_str)
+                    self.gclient.spreadsheetsClient.Update(error_entry,
+                            force=True)
                     continue
 
                 person_dict = self.gclient.personRowToDict(person_list_entry)
