@@ -394,7 +394,6 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 if not batch.staff_email in staff_followups:
                     staff_followups[batch.staff_email] = new_followup_struct()
                 bounce_xlsx_url = build_xlsx_download_link(spreadsheet_id(bss))
-                logging.info('bounces spreadsheet: %s' % bounce_xlsx_url)
                 staff_followups[batch.staff_email]['bounces'].append(
                         (batch, bounce_xlsx_url))
 
