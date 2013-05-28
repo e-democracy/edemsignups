@@ -699,9 +699,11 @@ class GClient(object):
 
         contents = self.docsClient.GetResources(uri=folder.content.src, q=query)
         for entry in contents.entry:
+            entry_id = entry.resource_id.text.replace('spreadsheet:', '')
             if entry.GetResourceType() == 'folder':
                 folders.append(entry)
-            elif entry.GetResourceType() == 'spreadsheet':
+            elif entry.GetResourceType() == 'spreadsheet' and \
+                    entry_id != settings['base_spreadsheet_id']:
                 yield entry
 
         for folder in folders:
