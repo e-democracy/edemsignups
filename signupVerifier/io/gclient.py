@@ -605,7 +605,7 @@ class GClient(object):
 
         # Get the Bounces for this batch and populate the cloned Raw sheet
         #TODO see about making this a batch operation
-        nbslf = self.spreadsheetClient.GetListFeed(ngsid, nrsid).entry
+        nbslf = self.spreadsheetsClient.GetListFeed(ngsid, nrsid).entry
         for i, bounce in enumerate(batch.bounces):
             bounce_dict = bounce.person.asDict()
 
@@ -658,7 +658,7 @@ class GClient(object):
 
         # Get the Optouts for this batch and populate the cloned Raw sheet
         #TODO see about making this a batch operation
-        nrslf = self.spreadsheetClient.GetListFeed(ngsid, nrsid).entry
+        nrslf = self.spreadsheetsClient.GetListFeed(ngsid, nrsid).entry
         for i, optout in enumerate(batch.optouts):
             optout_dict = optout.person.asDict()
 
