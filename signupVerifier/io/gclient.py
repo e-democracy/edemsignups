@@ -601,11 +601,12 @@ class GClient(object):
                                             ogsid, batch_id, " - Bounced", 
                                                 headers_to_add)
         ngsid = spreadsheet_id(new_spreadsheet)
-        nbsid = worksheet_id(new_raw_sheet)
+        nrsid = worksheet_id(new_raw_sheet)
 
         # Get the Bounces for this batch and populate the cloned Raw sheet
         #TODO see about making this a batch operation
-        for bounce in batch.bounces:
+        nbslf = self.spreadsheetClient.GetListFeed(ngsid, nrsid).entry
+        for i, bounce in enumerate(batch.bounces):
             bounce_dict = bounce.person.asDict()
 
             # Adjust some keys, add additional key/values
@@ -613,10 +614,10 @@ class GClient(object):
             bounce_dict['occurred'] = bounce.occurred
             bounce_dict['message'] = bounce.message
 
-            
-
             bounce_row = self.personDictToRow(bounce_dict)
-            self.spreadsheetsClient.AddListEntry(bounce_row, ngsid, nbsid)
+            bounce_entry = nbslf[i]
+            bounce_entry.from_dict(bounce_row.to_dict())
+            self.spreadsheetsClient.Update(bounce_entry, force=True)
 
         return (new_spreadsheet, new_raw_sheet)
 
@@ -653,21 +654,23 @@ class GClient(object):
                                             ogsid, batch_id, " - OptOuts", 
                                                 headers_to_add)
         ngsid = spreadsheet_id(new_spreadsheet)
-        nbsid = worksheet_id(new_raw_sheet)
+        nrsid = worksheet_id(new_raw_sheet)
 
         # Get the Optouts for this batch and populate the cloned Raw sheet
         #TODO see about making this a batch operation
-        for optout in batch.optouts:
+        nrslf = self.spreadsheetClient.GetListFeed(ngsid, nrsid).entry
+        for i, optout in enumerate(batch.optouts):
             optout_dict = optout.person.asDict()
 
             # Adjust some keys, add additional key/values
             optout_dict['occurred'] = optout.occurred
             optout_dict['reason'] = optout.reason
             optout_dict['person_id'] = optout.person.key()
-            
 
             optout_row = self.personDictToRow(optout_dict)
-            self.spreadsheetsClient.AddListEntry(optout_row, ngsid, nbsid)
+            optout_entry = nrslf[i]
+            optout_entry.from_dict(optout_row.to_dict())
+            self.spreadsheetsClient.Update(optout_entry, force=True)
 
         return (new_spreadsheet, new_raw_sheet)
 
