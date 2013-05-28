@@ -2,7 +2,7 @@
 import datetime as dt
 import re
 from gdata.docs.client import DocsClient, DocsQuery
-from gdata.docs.data import Resource
+from gdata.docs.data import Resource, AclEntry
 from gdata.spreadsheets.client import SpreadsheetsClient, WorksheetQuery,\
                                         CellQuery
 from gdata.spreadsheets.data import SpreadsheetsFeed, Spreadsheet, Worksheet,\
@@ -673,6 +673,28 @@ class GClient(object):
             self.spreadsheetsClient.Update(optout_entry, force=True)
 
         return (new_spreadsheet, new_raw_sheet)
+
+    def setPersmissions(resource):
+    """
+        Sets the persmissions of the provided resource so that only the app's 
+        username, the staff person, and a small group of others can view and 
+        edit the resource.
+      
+        Input: resource - the Resource instance to set permissions for
+        Side Effects: The ACL of the provided resource will be changed so that
+                      only the above mentioned group of users will be able to 
+                      view and edit the resource.
+    """
+        acl_feed = self.docsClient.GetResourceAcl(resource)
+        for acl in acl_feed:
+	    if acl.scope.value == settings['app_username']:
+		continue
+            self.docsClient.DeleteAclEntry(acl)
+
+        for user in users_with_access
+            new_acl = AclEntry.GetInstance(role='writer', scope_type='user', 
+                        scope_value=user)
+            self.docsClient.AddAclEntry(resource, new_acl)
 
 
     def spreadsheets(self, folder, query=None):
