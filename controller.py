@@ -180,7 +180,6 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                     spreadsheet_id(validations_spreadsheet))
 
                     error_entry = validations_listfeed[error_i]
-                    logging.info(error_entry)
                     error_i += 1
                     error_entry.from_dict(person_list_entry.to_dict())
                     error_entry.set_value('errors', errors_str)
