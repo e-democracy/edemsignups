@@ -1,5 +1,6 @@
 # coding=utf-8
 from google.appengine.ext import db
+import logging
 
 # clone_entity is from http://stackoverflow.com/questions/2687724/copy-an-entity-in-google-app-engine-datastore-in-python-without-knowing-property/7532887#7532887
 def clone_entity(e, skip_auto_now=False, skip_auto_now_add=False, **extra_args):
@@ -20,7 +21,6 @@ def clone_entity(e, skip_auto_now=False, skip_auto_now_add=False, **extra_args):
   Returns:
     A cloned, possibly modified, copy of entity e.
   """
-
   klass = e.__class__
   props = {}
   for k, v in klass.properties().iteritems():
@@ -32,5 +32,5 @@ def clone_entity(e, skip_auto_now=False, skip_auto_now_add=False, **extra_args):
       else:
         value = v.__get__(e, klass)
       props[k] = value
-  props.update(extra_args)
+  props.update(extra_args['extra_args'])
   return klass(**props)
