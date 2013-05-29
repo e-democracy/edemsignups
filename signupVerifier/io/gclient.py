@@ -674,8 +674,8 @@ class GClient(object):
 
         return (new_spreadsheet, new_raw_sheet)
 
-    def setPersmissions(resource):
-    """
+    def setPermissions(self, resource):
+        """
         Sets the persmissions of the provided resource so that only the app's 
         username, the staff person, and a small group of others can view and 
         edit the resource.
@@ -684,17 +684,18 @@ class GClient(object):
         Side Effects: The ACL of the provided resource will be changed so that
                       only the above mentioned group of users will be able to 
                       view and edit the resource.
-    """
-        acl_feed = self.docsClient.GetResourceAcl(resource)
+        """
+        acl_feed = self.docsClient.GetResourceAcl(resource).entry
         for acl in acl_feed:
-	    if acl.scope.value == settings['app_username']:
-		continue
+            if acl.scope.value == settings['app_username']:
+		        continue
             self.docsClient.DeleteAclEntry(acl)
 
-        for user in users_with_access
+        for user in settings['all_access_users']:
             new_acl = AclEntry.GetInstance(role='writer', scope_type='user', 
                         scope_value=user)
-            self.docsClient.AddAclEntry(resource, new_acl)
+            self.docsClient.AddAclEntry(resource, new_acl, send_notifications =
+                    False)
 
 
     def spreadsheets(self, folder, query=None):
