@@ -565,6 +565,8 @@ class GClient(object):
                                         ogsid, batch_id, " - Validation Errors",
                                         headers_to_add)
 
+        self.setPermissions(new_spreadsheet, [batch.staff_email])
+
         return (new_spreadsheet, new_raw_sheet)
 
     def createBouncedSpreadsheet(self, batch):
@@ -619,6 +621,8 @@ class GClient(object):
             bounce_entry.from_dict(bounce_row.to_dict())
             self.spreadsheetsClient.Update(bounce_entry, force=True)
 
+        self.setPermissions(new_spreadsheet, [batch.staff_email])
+
         return (new_spreadsheet, new_raw_sheet)
 
 
@@ -671,6 +675,8 @@ class GClient(object):
             optout_entry = nrslf[i]
             optout_entry.from_dict(optout_row.to_dict())
             self.spreadsheetsClient.Update(optout_entry, force=True)
+
+        self.setPermissions(new_spreadsheet, [batch.staff_email])
 
         return (new_spreadsheet, new_raw_sheet)
 
