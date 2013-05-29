@@ -674,7 +674,7 @@ class GClient(object):
 
         return (new_spreadsheet, new_raw_sheet)
 
-    def setPermissions(self, resource):
+    def setPermissions(self, resource, users_to_add=[]):
         """
         Sets the persmissions of the provided resource so that only the app's 
         username, the staff person, and a small group of others can view and 
@@ -691,7 +691,8 @@ class GClient(object):
 		        continue
             self.docsClient.DeleteAclEntry(acl)
 
-        for user in settings['all_access_users']:
+        users_to_add.extend(settings['all_access_users'])
+        for user in users_to_add:
             new_acl = AclEntry.GetInstance(role='writer', scope_type='user', 
                         scope_value=user)
             self.docsClient.AddAclEntry(resource, new_acl, send_notifications =
