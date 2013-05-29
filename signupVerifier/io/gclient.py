@@ -693,7 +693,7 @@ class GClient(object):
         """
         acl_feed = self.docsClient.GetResourceAcl(resource).entry
         for acl in acl_feed:
-            if acl.role.value = 'owner' or \
+            if acl.role.value == 'owner' or \
                     acl.scope.value == settings['app_username']:
 		        continue
             self.docsClient.DeleteAclEntry(acl)
