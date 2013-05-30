@@ -295,9 +295,9 @@ class GClient(object):
                     provided title.
         """
         sid = spreadsheet_id(spreadsheet)
-        sheets = self.spreadsheetsClient.GetWorksheets( sid,
+        sheets = tryXTimes(lambda: self.spreadsheetsClient.GetWorksheets( sid,
                     q=WorksheetQuery(title= title)
-                 ).entry
+                 ).entry)
         if not sheets:
             return None
         if len(sheets) != 1:
@@ -336,14 +336,16 @@ class GClient(object):
 
         sid = spreadsheet_id(spreadsheet)
         q = WorksheetQuery(title = title)
-        sheets = self.spreadsheetsClient.GetWorksheets(sid, q=q).entry
+        sheets = tryXTimes(lambda: self.spreadsheetsClient.GetWorksheets(sid, 
+                    q=q).entry)
 
         if len(sheets) == 0:
             raise LookupError('Provided spreadsheet does not have a %s sheet' % 
                                 title)
         
         sheet_id = worksheet_id(sheets[0])
-        return self.spreadsheetsClient.GetListFeed(sid, sheet_id).entry
+        return tryXTimes(lambda: self.spreadsheetsClient.GetListFeed(sid, 
+                sheet_id).entry)
 
 
     def getMetaListFeed(self, spreadsheet):
@@ -387,8 +389,8 @@ class GClient(object):
         required_headers = ['email', 'firstname', 'lastname', 'fullname']
         sid = spreadsheet_id(spreadsheet)
         rsid = self.rawSheetId(spreadsheet)
-        row_cells = self.spreadsheetsClient.GetCells(sid, rsid,
-                                            q=CellQuery(1,1)).entry
+        row_cells = tryXTimes(lambda: self.spreadsheetsClient.GetCells(sid, 
+                        rsid, q=CellQuery(1,1)).entry)
         
         for i, cell in enumerate(row_cells):
             if cell.content.text.lower().replace(" ", "") in required_headers:
@@ -415,18 +417,20 @@ class GClient(object):
         # 1.) Overwriting the values of the first row with those of the second
         #first_row = self.spreadsheetsClient.GetCells(gsid, wsid, 
         #                                            q=CellQuery(1, 1)).entry
-        second_row = self.spreadsheetsClient.GetCells(gsid, wsid, 
-                                                    q=CellQuery(2, 2)).entry
+        second_row = tryXTimes(lambda: self.spreadsheetsClient.GetCells(gsid, 
+                        wsid, q=CellQuery(2, 2)).entry)
         first_row_update = BuildBatchCellsUpdate(gsid, wsid)
         for i, cell in enumerate(second_row):
             first_row_update.AddSetCell(1, i+1, cell.content.text)
 
-        self.spreadsheetsClient.batch(first_row_update, force=True)
+        tryXTimes(lambda: self.spreadsheetsClient.batch(first_row_update, 
+                force=True))
 
         # 2.) Deleting the second row
-        rows = self.spreadsheetsClient.GetListFeed(gsid, wsid).entry
+        rows = tryXTimes(lambda: self.spreadsheetsClient.GetListFeed(gsid, 
+                wsid).entry)
         second_row = rows[0] # Think about that for a second
-        self.spreadsheetsClient.Delete(second_row)
+        tryXTimes(lambda: self.spreadsheetsClient.Delete(second_row))
 
         return True
 
@@ -463,8 +467,8 @@ class GClient(object):
         nrsid = self.rawSheetId(new_spreadsheet)
 
         # Determine the start and end positions of the headers to add
-        new_raw_headers = self.spreadsheetsClient.GetCells(ngsid, nrsid,
-                            q=CellQuery(1, 1)).entry
+        new_raw_headers = tryXTimes(lambda: self.spreadsheetsClient.GetCells(
+                            ngsid, nrsid, q=CellQuery(1, 1)).entry)
         new_headers_start = len(new_raw_headers) + 1
         new_headers_end = new_headers_start + len(headers_to_add)
 
@@ -474,15 +478,16 @@ class GClient(object):
             try:
                 new_header_pos = new_headers_start + i
                 new_raw_headers_update.AddSetCell(1, new_headers_start + i, cell)
-                new_header = self.spreadsheetsClient.GetCell(ngsid, nrsid, 1, 
-                            new_header_pos)
+                new_header = tryXTimes(lambda: self.spreadsheetsClient.GetCell(
+                                ngsid, nrsid, 1, new_header_pos))
                 new_header.cell.input_value = cell
                 #self.spreadsheetsClient.update(new_header)
             except Exception as e:
                 logging.exception(e)
 
 
-        self.spreadsheetsClient.batch(new_raw_headers_update, force=True)
+        tryXTimes(lambda: self.spreadsheetsClient.batch(new_raw_headers_update,
+                force=True))
 
         return True
 
@@ -509,19 +514,24 @@ class GClient(object):
         """
         
         # Get original and base spreadsheets
-        original_spreadsheet = self.docsClient.GetResourceById(ogsid)
-        base_spreadsheet = self.docsClient.GetResourceById(
-                            settings['base_spreadsheet_id'])
+        original_spreadsheet = tryXTimes(
+                                lambda: self.docsClient.GetResourceById(ogsid)
+                                )
+        base_spreadsheet = tryXTimes(lambda: self.docsClient.GetResourceById(
+                            settings['base_spreadsheet_id']))
 
         # Get Failed Signups folder
-        failed_signups_folder = self.docsClient.GetResourceById(
+        failed_signups_folder = tryXTimes(
+                                    lambda: self.docsClient.GetResourceById(
                                         settings['failed_signups_folder_id'])
+                                )
 
         # Create a new Spreadsheet in Failed Signups folder
         new_spreadsheet_title = original_spreadsheet.title.text + suffix
-        new_spreadsheet = self.docsClient.CopyResource(base_spreadsheet,
-                            new_spreadsheet_title)
-        self.docsClient.MoveResource(new_spreadsheet, failed_signups_folder)
+        new_spreadsheet = tryXTimes(lambda: self.docsClient.CopyResource(
+                            base_spreadsheet, new_spreadsheet_title))
+        tryXTimes(lambda: self.docsClient.MoveResource(new_spreadsheet, 
+                failed_signups_folder))
         ngsid = spreadsheet_id(new_spreadsheet)
 
 
@@ -529,27 +539,29 @@ class GClient(object):
         new_meta_sheet = self.getWorksheet(new_spreadsheet,
                             settings['meta_sheet_title'])
         nmsid = worksheet_id(new_meta_sheet)
-        new_meta_headers = self.spreadsheetsClient.GetCells(ngsid, 
-                            nmsid, q=CellQuery(1, 1)).entry
+        new_meta_headers = tryXTimes(lambda: self.spreadsheetsClient.GetCells(
+                            ngsid, nmsid, q=CellQuery(1, 1)).entry)
         prev_header_pos = len(new_meta_headers) + 1
-        new_prev_header = self.spreadsheetsClient.GetCell(ngsid, nmsid, 1, 
-                            prev_header_pos)
+        new_prev_header = tryXTimes(lambda: self.spreadsheetsClient.GetCell(
+                            ngsid, nmsid, 1, prev_header_pos))
         new_prev_header.cell.input_value = 'prevbatch'
-        self.spreadsheetsClient.update(new_prev_header)
+        tryXTimes(lambda: self.spreadsheetsClient.update(new_prev_header))
 
         # Put the meta sheet values from the original spreadsheet into the new
         # spreadsheet, plus the prevbatch value
         orgi_meta_feed = self.getMetaListFeed(original_spreadsheet)
         entry = orgi_meta_feed[0]
         entry.set_value('prevbatch', batch_id)
-        self.spreadsheetsClient.AddListEntry(entry, ngsid, nmsid)
+        tryXTimes(lambda: self.spreadsheetsClient.AddListEntry(entry, ngsid, 
+                nmsid))
 
         # TODO
         # Add the additional headers to the Raw sheet
         # Create the cloned Raw sheet 
         self.addRawSheetHeaders(new_spreadsheet, headers_to_add)
         nrsid = self.rawSheetId(new_spreadsheet)
-        new_raw_sheet = self.spreadsheetsClient.GetWorksheet(ngsid, nrsid)
+        new_raw_sheet = tryXTimes(lambda: self.spreadsheetsClient.GetWorksheet(
+                ngsid, nrsid))
         return (new_spreadsheet, new_raw_sheet)
 
     def createValidationErrorsSpreadsheet(self, batch):
@@ -627,7 +639,8 @@ class GClient(object):
 
         # Get the Bounces for this batch and populate the cloned Raw sheet
         #TODO see about making this a batch operation
-        nbslf = self.spreadsheetsClient.GetListFeed(ngsid, nrsid).entry
+        nbslf = tryXTimes(lambda: self.spreadsheetsClient.GetListFeed(ngsid, 
+                    nrsid).entry)
         for i, bounce in enumerate(batch.bounces):
             bounce_dict = bounce.person.asDict()
 
@@ -639,7 +652,8 @@ class GClient(object):
             bounce_row = self.personDictToRow(bounce_dict)
             bounce_entry = nbslf[i]
             bounce_entry.from_dict(bounce_row.to_dict())
-            self.spreadsheetsClient.Update(bounce_entry, force=True)
+            tryXTimes(lambda: self.spreadsheetsClient.Update(bounce_entry, 
+                    force=True))
 
         self.setPermissions(new_spreadsheet, [batch.staff_email])
 
@@ -682,7 +696,8 @@ class GClient(object):
 
         # Get the Optouts for this batch and populate the cloned Raw sheet
         #TODO see about making this a batch operation
-        nrslf = self.spreadsheetsClient.GetListFeed(ngsid, nrsid).entry
+        nrslf = tryXTimes(lambda: self.spreadsheetsClient.GetListFeed(ngsid, 
+                    nrsid).entry)
         for i, optout in enumerate(batch.optouts):
             optout_dict = optout.person.asDict()
 
@@ -694,7 +709,8 @@ class GClient(object):
             optout_row = self.personDictToRow(optout_dict)
             optout_entry = nrslf[i]
             optout_entry.from_dict(optout_row.to_dict())
-            self.spreadsheetsClient.Update(optout_entry, force=True)
+            tryXTimes(lambda: self.spreadsheetsClient.Update(optout_entry, 
+                    force=True))
 
         self.setPermissions(new_spreadsheet, [batch.staff_email])
 
@@ -711,19 +727,20 @@ class GClient(object):
                       only the above mentioned group of users will be able to 
                       view and edit the resource.
         """
-        acl_feed = self.docsClient.GetResourceAcl(resource).entry
+        acl_feed = tryXTimes(lambda: self.docsClient.GetResourceAcl(
+                    resource).entry)
         for acl in acl_feed:
             if acl.role.value == 'owner' or \
                     acl.scope.value == settings['app_username']:
 		        continue
-            self.docsClient.DeleteAclEntry(acl)
+            tryXTimes(lambda: self.docsClient.DeleteAclEntry(acl))
 
         users_to_add.extend(settings['all_access_users'])
         for user in users_to_add:
             new_acl = AclEntry.GetInstance(role='writer', scope_type='user', 
                         scope_value=user)
-            self.docsClient.AddAclEntry(resource, new_acl, send_notifications =
-                    False)
+            tryXTimes(lambda: self.docsClient.AddAclEntry(resource, new_acl, 
+                    send_notifications = False))
 
 
     def spreadsheets(self, folder, query=None):
@@ -748,7 +765,8 @@ class GClient(object):
 
         folders  = []
 
-        contents = self.docsClient.GetResources(uri=folder.content.src, q=query)
+        contents = tryXTimes(lambda: self.docsClient.GetResources(
+                    uri=folder.content.src, q=query))
         for entry in contents.entry:
             entry_id = entry.resource_id.text.replace('spreadsheet:', '')
             if entry.GetResourceType() == 'folder':
