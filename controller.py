@@ -58,7 +58,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         def new_batch_log(meta_dict, spreadsheet_url):
             return {'meta_dict': meta_dict, 'spreadsheet_url': spreadsheet_url,
                     'error': None, 'persons_success': [], 'persons_fail': [],
-                    'errors_sheet_url': None}
+                    'errors_sheet_url': None, 'errors_sheet_title': None}
 
         # 1.) Get list of all spreadsheets in folder
         signups_folder = self.gclient.docsClient.GetResourceById(
@@ -105,8 +105,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                 'staff_email': settings['admin_email_address'],
                                 'event_name': 'ERROR',
                                 'event_date': 'ERROR'
-                            }, build_xlsx_download_link(
-                                spreadsheet_id(new_spreadsheet)))
+                            },new_spreadsheet.GetHtmlLink())
                 batch_logs.append(batch_log)
                 batch_log['error'] = e
                 continue
@@ -114,6 +113,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # Create a batch log for the new batch
             batch_log = new_batch_log(meta_dict,
                             new_spreadsheet.FindHtmlLink())
+            logging.info('New title: %s' % new_spreadsheet.title.text)
             batch_logs.append(batch_log)
 
             # 3.) Convert and import persons and create OptOutTokens
@@ -176,8 +176,9 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                 self.gclient.spreadsheetsClient.GetListFeed(
                                     vgsid, vwsid).entry
                         batch_log['errors_sheet_url'] =\
-                                build_xlsx_download_link(
-                                    spreadsheet_id(validations_spreadsheet))
+                                validations_spreadsheet.FindHtmlLink()
+                        batch_log['errors_sheet_title'] =\
+                                validations_spreadsheet.title.text
 
                     error_entry = validations_listfeed[error_i]
                     error_i += 1
@@ -246,7 +247,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         'event_date': batch_log['meta_dict']['event_date'],
                         'successful_persons': [],
                         'failed_persons': [],
-                        'errors_sheet_url': batch_log['errors_sheet_url']
+                        'errors_sheet_url': batch_log['errors_sheet_url'],
+                        'errors_sheet_title': batch_log['errors_sheet_title']
                     }
 
                 for person in batch_log['persons_success']:

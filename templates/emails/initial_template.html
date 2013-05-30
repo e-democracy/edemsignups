@@ -20,12 +20,7 @@
       {% for successful_batch in successful_batches %}
         <h2><a href="{{ successful_batch.url }}">{{ successful_batch.event_name }} on {{ successful_batch.event_date }}</a></h2>
         {% if successful_batch.successful_persons %}
-          <p>The following addresses were emailed (this does not mean they are verified, they may still bounce or opt out):</p>
-          <ul>
-            {% for successful_person in successful_batch.successful_persons %}
-              <li>{{ successful_person.email }} - {{ successful_person.full_name }}</li>
-            {% endfor %}
-          </ul>
+          <p>{{successful_batch.successful_persons|length }} addresses were emailed (this does not mean they are verified, they may still bounce or opt out)</p>
         {% endif %}
         {% if successful_batch.failed_persons %}
           <p>The following addresses were not emailed due to errors:</p>
@@ -36,7 +31,7 @@
             </li>
           {% endfor %}
           </ul>
-          <p>A spreadsheet containing these entries with errors can be downloaded at <a href="{{ successful_batch.errors_sheet_url }}">here</a>.</p>
+          <p>Please view and fix these errors in the spreadsheet named <a href="{{ successful_batch.errors_sheet_url }}">{{ successful_batch.errors_sheet_title }}</a>.</p>
           <p style="margin-top: 5px;"><i>Tips for dealing with errors</i></p>
           <p>Here are some tips for dealing with the errors that you might encoutner in this spreadsheet</p>
           <dl>

@@ -13,14 +13,13 @@ Due to errors in batch metadata, these batches were not processed. Please use th
 {% for successful_batch in successful_batches %}
  - {{ successful_batch.event_name }} on {{ successful_batch.event_date }}: {{ successful_batch.url }}
 {% if successful_batch.successful_persons %}
-      The following addresses were emailed (this does not mean they are verified, they may still bounce or opt out): {% for successful_person in successful_batch.successful_persons %}
-        + {{ successful_person.email }} - {{ successful_person.full_name }}
-{% endfor %}{% endif %}{% if successful_batch.failed_persons %}
+      {{successful_batch.successful_persons|length }} addresses were emailed (this does not mean they are verified, they may still bounce or opt out)
+{% endif %}{% if successful_batch.failed_persons %}
       The following addresses were not emailed due to an error:{% for failed_person in successful_batch.failed_persons %}
         + {{ failed_person.email }} - {{ failed_person.full_name }}
               Error: {{ failed_person.error }}
 {% endfor %}
-        A spreadsheet containing these entries with errors can be downloaded at
+        Please view and fix these errors in the spreadsheet named {{ successful_batch.errors_sheet_title }} at {{ successful_batch.errors_sheet_url }}
         
         *Tips for dealing with errors*
          Here are some tips for dealing with the errors that you might encoutner in this spreadsheet:
