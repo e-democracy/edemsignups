@@ -11,6 +11,7 @@ from ..settings import settings
 from ..models import Batch, BatchSpreadsheet
 from ..processors.final_processor import getBatches
 from google.appengine.api.datastore_types import Key
+from httplib import BadStatusLine
 
 import logging
 
@@ -37,6 +38,23 @@ def worksheet_id(worksheet):
     wid = worksheet.id.text.rsplit('/',1)[1]
     assert wid
     return wid
+
+def tryXTimes(func, times=5):
+    """
+        Helper function that will retry a function in the event of a 
+        BadStatusLine. Attempts the provided function as many times as 
+        indicated, or until there is no BadStatusLine.
+    """
+    for i in range(1, times):
+        try:
+            return func()
+        except BadStatusLine as e:
+            logging.error('Caught BadStatusLine on try %s' % i)
+            logging.exception(e)
+
+    logging.info('Final Try')
+    return func()
+
 
 meta_key_map = {
     'staff_name':'staffname',
@@ -88,9 +106,10 @@ class GClient(object):
     def docsClient(self):
         if self.__docsClient__ is None:
             self.__docsClient__ = DocsClient()
-            self.__docsClient__.ClientLogin(settings['app_username'],
+            tryXTimes(lambda: self.__docsClient__.ClientLogin(
+                                settings['app_username'],
                                 settings['app_password'], 
-                                settings['app_name'])
+                                settings['app_name']))
 
         assert self.__docsClient__
         return self.__docsClient__
@@ -99,9 +118,10 @@ class GClient(object):
     def spreadsheetsClient(self):
         if self.__spreadsheetsClient__ is None:
             self.__spreadsheetsClient__ = SpreadsheetsClient()
-            self.__spreadsheetsClient__.ClientLogin(settings['app_username'],
+            tryXTimes(lambda: self.__spreadsheetsClient__.ClientLogin(
+                                settings['app_username'],
                                 settings['app_password'], 
-                                settings['app_name'])
+                                settings['app_name']))
         assert self.__spreadsheetsClient__
         return self.__spreadsheetsClient__
 
