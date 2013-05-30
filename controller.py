@@ -61,8 +61,9 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     'errors_sheet_url': None, 'errors_sheet_title': None}
 
         # 1.) Get list of all spreadsheets in folder
-        signups_folder = self.gclient.docsClient.GetResourceById(
-                            settings['signups_folder_id'])
+        signups_folder = tryXTimes(
+                            lambda: self.gclient.docsClient.GetResourceById(
+                                settings['signups_folder_id']))
         spreadsheets = self.gclient.spreadsheets(signups_folder)
 
         # 2.) Discard from that list all spreadsheets already processed
@@ -172,9 +173,9 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                 batch)
                         vgsid = spreadsheet_id(validations_spreadsheet)
                         vwsid = worksheet_id(validations_worksheet)
-                        validations_listfeed = \
+                        validations_listfeed = tryXTimes( lambda: \
                                 self.gclient.spreadsheetsClient.GetListFeed(
-                                    vgsid, vwsid).entry
+                                    vgsid, vwsid).entry)
                         batch_log['errors_sheet_url'] =\
                                 validations_spreadsheet.FindHtmlLink()
                         batch_log['errors_sheet_title'] =\
@@ -184,8 +185,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     error_i += 1
                     error_entry.from_dict(person_list_entry.to_dict())
                     error_entry.set_value('errors', errors_str)
-                    self.gclient.spreadsheetsClient.Update(error_entry,
-                            force=True)
+                    tryXTimes(lambda: self.gclient.spreadsheetsClient.Update(
+                            error_entry, force=True))
                     continue
 
                 person_dict = self.gclient.personRowToDict(person_list_entry)
