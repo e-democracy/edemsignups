@@ -2,11 +2,11 @@ cron:
 - description: Daily execution of the initial verifier script
   target: verifier
   url: /spreadsheet_initial
-  timezone: American/Chicago
+  timezone: America/Chicago
   schedule: every day 20:30
 
 - description: Daily execution of the followup verifier script
   target: verifier
   url: /spreadsheet_followup
-  timezone: American/Chicago
+  timezone: America/Chicago
   schedule: everyday 20:00
