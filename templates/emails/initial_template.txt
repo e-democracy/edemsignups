@@ -19,7 +19,7 @@ Due to errors in batch metadata, these batches were not processed. Please use th
         + {{ failed_person.email }} - {{ failed_person.full_name }}
               Error: {{ failed_person.error }}
 {% endfor %}
-        Please view and fix these errors in the spreadsheet named {{ successful_batch.errors_sheet_title }} at {{ successful_batch.errors_sheet_url }}
+        Please view and fix these errors in the spreadsheet named {{ successful_batch.errors_sheet_title }} at {{ successful_batch.errors_sheet_url }} . When you are finished fixing these errors, move the spreadsheet into the Spreadsheets to Process folder.
         
         *Tips for dealing with errors*
          Here are some tips for dealing with the errors that you might encoutner in this spreadsheet:
