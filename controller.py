@@ -5,7 +5,8 @@ import webapp2
 from urllib import urlencode
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id
+from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id,\
+    tryXTimes
 from signupVerifier.processors.initial_processor import importBatch,\
     importPerson, addBatchChange, addPersonChange, sendVerificationEmails
 from signupVerifier.processors.optout_processor import createOptOutToken,\
@@ -114,7 +115,6 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             # Create a batch log for the new batch
             batch_log = new_batch_log(meta_dict,
                             new_spreadsheet.FindHtmlLink())
-            logging.info('New title: %s' % new_spreadsheet.title.text)
             batch_logs.append(batch_log)
 
             # 3.) Convert and import persons and create OptOutTokens
