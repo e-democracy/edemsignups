@@ -736,7 +736,7 @@ class GClient(object):
             tryXTimes(lambda: self.docsClient.DeleteAclEntry(acl))
 
         users_to_add.extend(settings['all_access_users'])
-        for user in users_to_add:
+        for user in set(users_to_add):
             new_acl = AclEntry.GetInstance(role='writer', scope_type='user', 
                         scope_value=user)
             tryXTimes(lambda: self.docsClient.AddAclEntry(resource, new_acl, 
