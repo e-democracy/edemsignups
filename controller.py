@@ -204,9 +204,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     batch_log['persons_fail'].append((person_dict, e))
 
             # 4.) Generate and send Emails!
-            optout_base_url = '/'.join([
-                                self.request.host_url.rpartition(':')[0],
-                                'optout'])
+            optout_base_url = '/'.join([self.request.host_url, 'optout'])
             batch_log = sendVerificationEmails(batch, persons, optout_tokens,
                             optout_base_url, batch_log)
 
