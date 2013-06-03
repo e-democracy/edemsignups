@@ -30,8 +30,8 @@ ordered_person_attributes_for_upload = [
     'zip_code',                                                                 
     'phone']
 
-def getBatches(before=dt.datetime.now() - dt.timedelta(hours=50), 
-                after=dt.datetime.now() - dt.timedelta(hours=46)):
+def getBatches(before=dt.datetime.now() - dt.timedelta(hours=46), 
+                after=dt.datetime.now() - dt.timedelta(hours=50)):
     """
     Retrieves an interable of Batch models. If before and/or after are
     provided, these are used to limit retrived Batch instances to only those

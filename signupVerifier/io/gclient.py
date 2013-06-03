@@ -873,8 +873,8 @@ class GClient(object):
         return new_spreadsheets
 
     def getBatchSpreadsheets(self, before=dt.datetime.now() -
-                            dt.timedelta(hours=50), after=dt.datetime.now() - 
-                            dt.timedelta(hours=46)):
+                            dt.timedelta(hours=46), after=dt.datetime.now() - 
+                            dt.timedelta(hours=50)):
         """
         Returns an interable of BatchSpreadsheet instances. This is a wrapper
         of signupVerifier.processors.final_processor.getBatches.
