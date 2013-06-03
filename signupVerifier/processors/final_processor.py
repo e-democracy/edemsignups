@@ -43,8 +43,10 @@ def getBatches(before=dt.datetime.now() - dt.timedelta(hours=50),
     """
     q = Batch.all()
     if before:
+        logging.debug('Finding Batches before %s' % before)
         q.filter('created <=', before)
     if after:
+        logging.debug('Finding Batches after %s' % after)
         q.filter('created >=', after)
     for batch in q.run():
         yield batch
