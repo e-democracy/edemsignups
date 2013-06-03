@@ -53,6 +53,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         return self.__gclient__
 
     def get(self):
+        logging.info('Running Initial Script')
         # 0.) Setup output lists
         batch_logs = []
 
@@ -289,6 +290,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             message.body = email_text
             message.send()
 
+            logging.info('Emailed %s' % email)
+
             retval += email_html
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
@@ -343,6 +346,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         return self.__gclient__
 
     def get(self):
+        logging.info('Running Followup')
         # Used to organize what to send to who
         def new_followup_struct():
             return {'optouts': [],
@@ -362,7 +366,10 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             batches = [bs.batch for bs in self.gclient.getBatchSpreadsheets()]
 
         if not batches:
+            logging.info('No Batches to Followup On')
             return
+
+        logging.info('Following Up on %s batches' % len(batches))
         staff_followups = dict()
         successes = []
         for batch in batches:
@@ -418,6 +425,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 message.body = email_text
                 message.send()
 
+                logging.info('Emailed %s' % staff_address)
+
                 retval += email_html
 
         #   9.) For each Batch
@@ -428,6 +437,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
         #   10.) Email Uploader (FinalProcessor)
         emailCsvs(csvs, batches)
+
+        logging.info('Emailed CSVs')
 
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
