@@ -90,51 +90,7 @@ def emailFollowUpsToStaff(batches, email_template, url_func):
     Side Effect: One email will be sent to each staff person who entered
                  the information of a person who bounced or opted out.
     """
-all_stpaul = [ 
-    stpaul-issues,
-    stpaul-como,
-    stpaul-d1,
-    stpaul-db,
-    stpaul-dwtn,
-    stpaul-frogtown,
-    stpaul-ges,
-    stpaul-hm,
-    stpaul-highland,
-    stpaul-macgrove,
-    stpaul-northend,
-    stpaul-paynephalen,
-    stpaul-sh,
-    stpaul-su,
-    stpaul-up,
-    stpaul-w7,
-    stpaul-westside
-    ]
 
-all_mpls = [
-    mpls,
-    mpls-ap,
-    mpls-bryant,
-    mpls-cleveland,
-    mpls-corcoran,
-    mpls-cr,
-    mpls-eastharriet,
-    mpls-frn,
-    mpls-hpdl,
-    mpls-holland,
-    mpls-kingfield,
-    mpls-lh,
-    mpls-longfellow,
-    mpls-loring,
-    mpls-ne,
-    mpls-nearnorth,
-    mpls-nokomiseast,
-    mpls-phillips,
-    mpls-poho,
-    mpls-seward,
-    mpls-staneric,
-    mpls-uptown,
-    mpls-whittier
-    ]
 
 def personsToCsv(persons):
     """
@@ -153,11 +109,8 @@ def personsToCsv(persons):
         forums = person['forums']
         del person['forums']
         for forum in forums:
-            if forum == 'All St. Paul':
-                forums.extend(all_stpaul)
-                continue
-            if forum == 'All Minneapolis':
-                forums.extend(all_mpls)
+            if forum in settings['forum_mappings']:
+                forums.extend(settings['forum_mappings'][forum])
                 continue
             person['group_id'] = forum
             dict_writer.writerow(person)
