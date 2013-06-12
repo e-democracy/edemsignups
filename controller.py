@@ -366,10 +366,16 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
         #   2.) Get associated Batches
         if before:
-            batches = [bs.batch for bs in
-                    self.gclient.getBatchSpreadsheets(before=before)]
+            bss = self.gclient.getBatchSpreadsheets(
+                                    before=before) 
         else:
-            batches = [bs.batch for bs in self.gclient.getBatchSpreadsheets()]
+            bss = self.gclient.getBatchSpreadsheets()
+
+        batches = []
+        for bs in bss:
+            batch = bs.batch
+            ss = self.gclient.docsClient.GetResourceById(batch.gsid)
+            batches.append((batch, {'spreadsheet_title': ss.title.text}))
 
         if not batches:
             logging.info('No Batches to Followup On')
