@@ -57,9 +57,10 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         # 0.) Setup output lists
         batch_logs = []
 
-        def new_batch_log(meta_dict, spreadsheet_url):
+        def new_batch_log(meta_dict, spreadsheet_url, spreadsheet_title):
             return {'meta_dict': meta_dict, 'spreadsheet_url': spreadsheet_url,
-                    'error': None, 'persons_success': [], 'persons_fail': [],
+                    'spreadsheet_title': spreadsheet_title, 'error': None, 
+                    'persons_success': [], 'persons_fail': [], 
                     'errors_sheet_url': None, 'errors_sheet_title': None}
 
         # 1.) Get list of all spreadsheets in folder
@@ -109,14 +110,16 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                 'staff_email': settings['admin_email_address'],
                                 'event_name': 'ERROR',
                                 'event_date': 'ERROR'
-                            },new_spreadsheet.GetHtmlLink())
+                            },new_spreadsheet.GetHtmlLink(),
+                            new_spreadsheet.title.text)
                 batch_logs.append(batch_log)
                 batch_log['error'] = e
                 continue
 
             # Create a batch log for the new batch
             batch_log = new_batch_log(meta_dict,
-                            new_spreadsheet.FindHtmlLink())
+                            new_spreadsheet.FindHtmlLink(),
+                            new_spreadsheet.title.text)
             batch_logs.append(batch_log)
 
             # 3.) Convert and import persons and create OptOutTokens
@@ -238,6 +241,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 template_values['failed_batches'].append(
                         {
                             'url': batch_log['spreadsheet_url'],
+                            'title': batch_log['spreadsheet_title'],
                             'event_name': batch_log['meta_dict']['event_name'],
                             'event_date': batch_log['meta_dict']['event_date'],
                             'error': batch_log['error']
@@ -246,6 +250,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 successful_batch = \
                     {
                         'url': batch_log['spreadsheet_url'],
+                        'title': batch_log['spreadsheet_title'],
                         'event_name': batch_log['meta_dict']['event_name'],
                         'event_date': batch_log['meta_dict']['event_date'],
                         'successful_persons': [],
