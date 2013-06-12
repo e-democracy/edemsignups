@@ -6,7 +6,7 @@
   <p>Results for {{ batch.event_name }} on {{ batch.event_date }} at {{ batch.event_location }} by {{ batch.staff_name}} ({{ batch.staff_email  }}):</p>
   {% if extra %}
     {% if "spreadsheet_title" in extra %}
-  <p>{{ extra.spreadsheet_title  }}</p>
+  <p>Spreadsheet Title: {{ extra.spreadsheet_title  }}</p>
     {%endif%}
   {% endif %}
   <ul>

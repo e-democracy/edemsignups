@@ -186,6 +186,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         batch_log['errors_sheet_title'] =\
                                 validations_spreadsheet.title.text
 
+                    logging.debug('Accessing row # %s' % error_i)
                     error_entry = validations_listfeed[error_i]
                     error_i += 1
                     error_entry.from_dict(person_list_entry.to_dict())
@@ -374,7 +375,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         batches = []
         for bs in bss:
             batch = bs.batch
-            ss = self.gclient.docsClient.GetResourceById(batch.gsid)
+            ss = self.gclient.docsClient.GetResourceById(bs.gsid)
             batches.append((batch, {'spreadsheet_title': ss.title.text}))
 
         if not batches:
@@ -384,7 +385,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         logging.info('Following Up on %s batches' % len(batches))
         staff_followups = dict()
         successes = []
-        for batch in batches:
+        for batch, extra in batches:
             #   3.) Delete all Opt-Out Tokens associated with Batches
             #   4.) Get all Opt-Outs associated with Batches
             #   5.) Get all Bounces associated with Bounces
