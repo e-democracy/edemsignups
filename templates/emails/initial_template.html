@@ -9,7 +9,7 @@
     The following batches encountered errors while processing their coversheet. People in these batches where not emailed.
     <ul>
       {% for failed_batch in failed_batches %}
-        <li><a href="{{ failed_batch.url }}">{{ failed_batch.event_name }} on {{ failed_batch.event_date }}</a>
+        <li><a href="{{ failed_batch.url }}">{{ failed_batch.spreadsheet_title }}</a>
             <ul><li>Error: {{ failed_batch.error }}</li></ul>
         </li>
       {% endfor %}
@@ -18,7 +18,7 @@
     {% endif %}
     {% if successful_batches %}
       {% for successful_batch in successful_batches %}
-        <h2><a href="{{ successful_batch.url }}">{{ successful_batch.event_name }} on {{ successful_batch.event_date }}</a></h2>
+        <h2><a href="{{ successful_batch.url }}">{{ successful_batch.spreadsheet_title }}</a></h2>
         {% if successful_batch.successful_persons %}
           <p>{{successful_batch.successful_persons|length }} addresses were emailed (this does not mean they are verified, they may still bounce or opt out)</p>
         {% endif %}
