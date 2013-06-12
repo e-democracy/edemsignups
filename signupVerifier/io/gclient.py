@@ -843,7 +843,9 @@ class GClient(object):
 
         sid = spreadsheet_id(spreadsheet)
 
-        bs_record = BatchSpreadsheet(gsid = sid, batch = batch)
+        bs_record = BatchSpreadsheet(gsid = sid, batch = batch,
+                        title=spreadsheet.title.text, 
+                        url=spreadsheet.FindHtmlLink())
         bs_record.put()
 
         return bs_record
