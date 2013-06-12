@@ -76,6 +76,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             batch = None
             batchSpreadsheet = None
+            logging.info('Processing %s' % new_spreadsheet.title.text)
             try:
                 #  1.) Convert spreadsheets meta info to batch_dict
                 meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
