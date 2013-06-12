@@ -372,11 +372,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         else:
             bss = self.gclient.getBatchSpreadsheets()
 
-        batches = []
-        for bs in bss:
-            batch = bs.batch
-            ss = self.gclient.docsClient.GetResourceById(bs.gsid)
-            batches.append((batch, {'spreadsheet_title': ss.title.text}))
+        batches = [(bs.batch, {'spreadsheet_title': bs.title}) for bs in bss]
 
         if not batches:
             logging.info('No Batches to Followup On')
