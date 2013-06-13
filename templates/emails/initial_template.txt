@@ -11,7 +11,7 @@ The following batches encountered errors while processing their metadata. People
 Due to errors in batch metadata, these batches were not processed. Please use the links above to find the spreadsheets and address the errors indicated above.
 {% endif %}{% if successful_batches %}
 {% for successful_batch in successful_batches %}
- - {{ successful_batch.spreadsheet_title }}: {{ successful_batch.url }}
+ - {{ successful_batch.spreadsheet_title }}: {{ successful_batch.spreadsheet_url }}
 {% if successful_batch.successful_persons %}
       {{successful_batch.successful_persons|length }} addresses were emailed (this does not mean they are verified, they may still bounce or opt out)
 {% endif %}{% if successful_batch.failed_persons %}
