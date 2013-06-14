@@ -241,8 +241,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             if batch_log['error']:
                 template_values['failed_batches'].append(
                         {
-                            'url': batch_log['spreadsheet_url'],
-                            'title': batch_log['spreadsheet_title'],
+                            'spreadsheet_url': batch_log['spreadsheet_url'],
+                            'spreadsheet_title': batch_log['spreadsheet_title'],
                             'event_name': batch_log['meta_dict']['event_name'],
                             'event_date': batch_log['meta_dict']['event_date'],
                             'error': batch_log['error']
