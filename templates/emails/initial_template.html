@@ -9,7 +9,7 @@
     The following batches encountered errors while processing their coversheet. People in these batches where not emailed.
     <ul>
       {% for failed_batch in failed_batches %}
-        <li><a href="{{ failed_batch.url }}">{{ failed_batch.spreadsheet_title }}</a>
+        <li><a href="{{ failed_batch.spreadsheet_url }}">{{ failed_batch.spreadsheet_title }}</a>
             <ul><li>Error: {{ failed_batch.error }}</li></ul>
         </li>
       {% endfor %}

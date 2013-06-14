@@ -5,7 +5,7 @@ The E-Democracy Signup Verifier has processed a set of new signups that include 
 {% if failed_batches %}
 The following batches encountered errors while processing their metadata. People in these batches where not emailed.
 {% for failed_batch in failed_batches %}
- - {{ failed_batch.spreadsheet_title }}: {{ failed_batch.url }}
+ - {{ failed_batch.spreadsheet_title }}: {{ failed_batch.spreadsheet_url }}
       Error: {{ failed_batch.error }}
 {% endfor %}
 Due to errors in batch metadata, these batches were not processed. Please use the links above to find the spreadsheets and address the errors indicated above.
