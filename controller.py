@@ -363,7 +363,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         before = None
         if self.request.get('before') == 'now':
             before = dt.datetime.now()
-        else if self.request.get('before'):
+        elif self.request.get('before'):
             before = dt.strptime(self.request.get('before'), timefmt)
 
         after = None
