@@ -57,9 +57,10 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         # 0.) Setup output lists
         batch_logs = []
 
-        def new_batch_log(meta_dict, spreadsheet_url):
+        def new_batch_log(meta_dict, spreadsheet_url, spreadsheet_title):
             return {'meta_dict': meta_dict, 'spreadsheet_url': spreadsheet_url,
-                    'error': None, 'persons_success': [], 'persons_fail': [],
+                    'spreadsheet_title': spreadsheet_title, 'error': None, 
+                    'persons_success': [], 'persons_fail': [], 
                     'errors_sheet_url': None, 'errors_sheet_title': None}
 
         # 1.) Get list of all spreadsheets in folder
@@ -76,6 +77,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             batch = None
             batchSpreadsheet = None
+            logging.info('Processing %s' % new_spreadsheet.title.text)
             try:
                 #  1.) Convert spreadsheets meta info to batch_dict
                 meta_list_feed = self.gclient.getMetaListFeed(new_spreadsheet)
@@ -108,14 +110,16 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                 'staff_email': settings['admin_email_address'],
                                 'event_name': 'ERROR',
                                 'event_date': 'ERROR'
-                            },new_spreadsheet.GetHtmlLink())
+                            },new_spreadsheet.GetHtmlLink(),
+                            new_spreadsheet.title.text)
                 batch_logs.append(batch_log)
                 batch_log['error'] = e
                 continue
 
             # Create a batch log for the new batch
             batch_log = new_batch_log(meta_dict,
-                            new_spreadsheet.FindHtmlLink())
+                            new_spreadsheet.FindHtmlLink(),
+                            new_spreadsheet.title.text)
             batch_logs.append(batch_log)
 
             # 3.) Convert and import persons and create OptOutTokens
@@ -182,6 +186,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                         batch_log['errors_sheet_title'] =\
                                 validations_spreadsheet.title.text
 
+                    logging.debug('Accessing row # %s' % error_i)
                     error_entry = validations_listfeed[error_i]
                     error_i += 1
                     error_entry.from_dict(person_list_entry.to_dict())
@@ -236,7 +241,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             if batch_log['error']:
                 template_values['failed_batches'].append(
                         {
-                            'url': batch_log['spreadsheet_url'],
+                            'spreadsheet_url': batch_log['spreadsheet_url'],
+                            'spreadsheet_title': batch_log['spreadsheet_title'],
                             'event_name': batch_log['meta_dict']['event_name'],
                             'event_date': batch_log['meta_dict']['event_date'],
                             'error': batch_log['error']
@@ -244,7 +250,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             else:
                 successful_batch = \
                     {
-                        'url': batch_log['spreadsheet_url'],
+                        'spreadsheet_url': batch_log['spreadsheet_url'],
+                        'spreadsheet_title': batch_log['spreadsheet_title'],
                         'event_name': batch_log['meta_dict']['event_name'],
                         'event_date': batch_log['meta_dict']['event_date'],
                         'successful_persons': [],
@@ -367,17 +374,19 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
         #   2.) Get associated Batches
         if before and after:
-            batches = [bs.batch for bs in
+            bss = [bs.batch for bs in
                     self.gclient.getBatchSpreadsheets(before=before,
                     after=after)]
         else if before:
-            batches = [bs.batch for bs in
+            bss = [bs.batch for bs in
                     self.gclient.getBatchSpreadsheets(before=before)]
         else if after:
-            batches = [bs.batch for bs in
+            bss = [bs.batch for bs in
                     self.gclient.getBatchSpreadsheets(after=after)]
         else:
-            batches = [bs.batch for bs in self.gclient.getBatchSpreadsheets()]
+            bss = self.gclient.getBatchSpreadsheets()
+
+        batches = [(bs.batch, {'spreadsheet_title': bs.title}) for bs in bss]
 
         if not batches:
             logging.info('No Batches to Followup On')
@@ -386,7 +395,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         logging.info('Following Up on %s batches' % len(batches))
         staff_followups = dict()
         successes = []
-        for batch in batches:
+        for batch, extra in batches:
             #   3.) Delete all Opt-Out Tokens associated with Batches
             #   4.) Get all Opt-Outs associated with Batches
             #   5.) Get all Bounces associated with Bounces

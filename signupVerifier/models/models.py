@@ -148,6 +148,9 @@ class BatchSpreadsheet(db.Model):
     gsid = db.StringProperty(required = True)
     batch = db.ReferenceProperty(Batch, required = True,
                                 collection_name="spreadsheets")
+    created = db.DateTimeProperty(required = True, auto_now_add = True)
+    title = db.StringProperty()
+    url = db.LinkProperty()
 
 class OptOutToken(db.Model):
     """ The tokens used to associate an opt-out request with a person and 

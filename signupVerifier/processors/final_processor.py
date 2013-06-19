@@ -16,21 +16,8 @@ pp = pprint.PrettyPrinter(indent=4)
 csvs_ready_template = \
     'signupVerifier/processors/templates/csvs_ready_for_upload.html'
 
-ordered_person_attributes_for_upload = [                                        
-    'notes',
-    'group_id',                                                                 
-    'email',                                                                    
-    'first_name',                                                               
-    'last_name',                                                                
-    'full_name',                                                                
-    'neighborhood',                                                             
-    'street_address',                                                           
-    'city',                                                                     
-    'state',                                                                    
-    'zip_code',                                                                 
-    'phone']
 
-def getBatches(before=dt.datetime.now() - dt.timedelta(hours=46), 
+def getBatches(before=dt.datetime.now() - dt.timedelta(hours=46),
                 after=dt.datetime.now() - dt.timedelta(hours=50)):
     """
     Retrieves an interable of Batch models. If before and/or after are
@@ -51,17 +38,18 @@ def getBatches(before=dt.datetime.now() - dt.timedelta(hours=46),
     for batch in q.run():
         yield batch
 
-def emailFollowUpToStaffPerson(staff_name, staff_email, batch_links, 
+
+def emailFollowUpToStaffPerson(staff_name, staff_email, batch_links,
                         email_template):
     """
     Sends an email to the specified staff member with links and
     instructions that can be used to review and fix Persons who opted out
     or bounced.
-    
+
     Input:  staff_name - String indicating the name of the staff person
             staff_email - The staff person's email address
             batch_links - a list of URLs that the staff person can visit to
-                            view/fix/download the data of persons who 
+                            view/fix/download the data of persons who
                             bounced or opted out
             email_template - Template used to create the email
     Output: True if the email is sent successfully, False otherwise
@@ -69,11 +57,12 @@ def emailFollowUpToStaffPerson(staff_name, staff_email, batch_links,
     """
     pass
 
+
 def emailFollowUpsToStaff(batches, email_template, url_func):
     """
     Based on the provided batches, generates and sends emails to staff
     people with the information needed to follow up on Persons who bounced
-    or opted out. 
+    or opted out.
 
     The method will search the provided list of Batches for Perons who
     bounced or opted out. It will then use the provided email_template and
@@ -84,57 +73,14 @@ def emailFollowUpsToStaff(batches, email_template, url_func):
                         emails based on.
             email_template - the template of the email
             url_func - a callback function that will be used to generate
-                        the links sent to staff to access information on 
+                        the links sent to staff to access information on
                         bouncers and opt-outers.
     Output: True if successful, False otherwise
     Side Effect: One email will be sent to each staff person who entered
                  the information of a person who bounced or opted out.
     """
-all_stpaul = [ 
-    stpaul-issues,
-    stpaul-como,
-    stpaul-d1,
-    stpaul-db,
-    stpaul-dwtn,
-    stpaul-frogtown,
-    stpaul-ges,
-    stpaul-hm,
-    stpaul-highland,
-    stpaul-macgrove,
-    stpaul-northend,
-    stpaul-paynephalen,
-    stpaul-sh,
-    stpaul-su,
-    stpaul-up,
-    stpaul-w7,
-    stpaul-westside
-    ]
+    pass
 
-all_mpls = [
-    mpls,
-    mpls-ap,
-    mpls-bryant,
-    mpls-cleveland,
-    mpls-corcoran,
-    mpls-cr,
-    mpls-eastharriet,
-    mpls-frn,
-    mpls-hpdl,
-    mpls-holland,
-    mpls-kingfield,
-    mpls-lh,
-    mpls-longfellow,
-    mpls-loring,
-    mpls-ne,
-    mpls-nearnorth,
-    mpls-nokomiseast,
-    mpls-phillips,
-    mpls-poho,
-    mpls-seward,
-    mpls-staneric,
-    mpls-uptown,
-    mpls-whittier
-    ]
 
 def personsToCsv(persons):
     """
@@ -145,19 +91,16 @@ def personsToCsv(persons):
     """
     csv_buffer = StringIO()
     dict_writer = csv.DictWriter(csv_buffer,
-                                    ordered_person_attributes_for_upload,
-                                    extrasaction='ignore')
+                    settings['final_csv_column_order'],
+                    extrasaction='ignore')
     dict_writer.writeheader()
     for person in persons:
         person = person.asDict()
         forums = person['forums']
         del person['forums']
         for forum in forums:
-            if forum == 'All St. Paul':
-                forums.extend(all_stpaul)
-                continue
-            if forum == 'All Minneapolis':
-                forums.extend(all_mpls)
+            if forum in settings['forum_mappings']:
+                forums.extend(settings['forum_mappings'][forum])
                 continue
             person['group_id'] = forum
             dict_writer.writerow(person)
@@ -169,16 +112,17 @@ def personsToCsv(persons):
 
 def getSuccessfulSignups(batch):
     """
-    Searches the provided Batch instance and returns a list of Person 
-    instances who have not bounced or opted out.  
+    Searches the provided Batch instance and returns a list of Person
+    instances who have not bounced or opted out.
 
-    Input:  batch - a Batch instance or key to search through. 
-    Output: an interable of Person instances who did not bounce or opt-out. 
+    Input:  batch - a Batch instance or key to search through.
+    Output: an interable of Person instances who did not bounce or opt-out.
     """
     batch = Batch.verifyOrGet(batch)
     for person in batch.persons.run():
         if not person.bounces.get() and not person.optouts.get():
             yield person
+
 
 def emailCsvs(csvs, batches, email_template=csvs_ready_template):
     """
