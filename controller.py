@@ -377,10 +377,10 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             bss = [bs.batch for bs in
                     self.gclient.getBatchSpreadsheets(before=before,
                     after=after)]
-        else if before:
+        elif before:
             bss = [bs.batch for bs in
                     self.gclient.getBatchSpreadsheets(before=before)]
-        else if after:
+        elif after:
             bss = [bs.batch for bs in
                     self.gclient.getBatchSpreadsheets(after=after)]
         else:
