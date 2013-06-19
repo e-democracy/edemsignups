@@ -364,25 +364,21 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         if self.request.get('before') == 'now':
             before = dt.datetime.now()
         elif self.request.get('before'):
-            before = dt.strptime(self.request.get('before'), timefmt)
+            before = dt.datetime.strptime(self.request.get('before'), timefmt)
 
         after = None
         if self.request.get('after'):
-            after = dt.strptime(self.request.get('after'), timefmt)
+            after = dt.datetime.strptime(self.request.get('after'), timefmt)
 
         # Follow Up Script
         #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
         #   2.) Get associated Batches
         if before and after:
-            bss = [bs.batch for bs in
-                    self.gclient.getBatchSpreadsheets(before=before,
-                    after=after)]
+            bss = self.gclient.getBatchSpreadsheets(before=before, after=after)
         elif before:
-            bss = [bs.batch for bs in
-                    self.gclient.getBatchSpreadsheets(before=before)]
+            bss = self.gclient.getBatchSpreadsheets(before=before)
         elif after:
-            bss = [bs.batch for bs in
-                    self.gclient.getBatchSpreadsheets(after=after)]
+            bss = self.gclient.getBatchSpreadsheets(after=after)
         else:
             bss = self.gclient.getBatchSpreadsheets()
 
