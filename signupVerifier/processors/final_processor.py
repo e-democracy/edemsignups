@@ -1,6 +1,5 @@
 # coding=utf-8
 import datetime as dt
-import csv
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
 
@@ -8,6 +7,8 @@ from google.appengine.api import mail
 from StringIO import StringIO
 from ..models import Batch
 from ..settings import settings
+
+from unicode_csv import UnicodeDictWriter
 
 import logging
 import pprint
@@ -18,7 +19,7 @@ csvs_ready_template = \
 
 
 def getBatches(before=dt.datetime.now() - dt.timedelta(hours=46),
-                after=dt.datetime.now() - dt.timedelta(hours=50)):
+               after=dt.datetime.now() - dt.timedelta(hours=50)):
     """
     Retrieves an interable of Batch models. If before and/or after are
     provided, these are used to limit retrived Batch instances to only those
@@ -40,7 +41,7 @@ def getBatches(before=dt.datetime.now() - dt.timedelta(hours=46),
 
 
 def emailFollowUpToStaffPerson(staff_name, staff_email, batch_links,
-                        email_template):
+                               email_template):
     """
     Sends an email to the specified staff member with links and
     instructions that can be used to review and fix Persons who opted out
@@ -90,10 +91,14 @@ def personsToCsv(persons):
     Output: a CSV.
     """
     csv_buffer = StringIO()
-    dict_writer = csv.DictWriter(csv_buffer,
-                    settings['final_csv_column_order'],
-                    extrasaction='ignore')
-    dict_writer.writeheader()
+    dict_writer = UnicodeDictWriter(csv_buffer,
+                                    settings['final_csv_column_order'],
+                                    extrasaction='ignore')
+#    dict_writer = csv.DictWriter(csv_buffer,
+#                    settings['final_csv_column_order'],
+#                    extrasaction='ignore')
+    dict_writer.writeheaders()
+#    dict_writer.writeheader()
     for person in persons:
         person = person.asDict()
         forums = person['forums']
