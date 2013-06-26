@@ -381,6 +381,10 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             process_bounces = self.request.get('process_bounces') in \
                                 ['true', 'True', '1']
 
+        if not process_optouts:
+            logging.info('Not processing optouts')
+        if not process_bounces:
+            logging.info('Not processing bounces')
 
         # Follow Up Script
         #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
