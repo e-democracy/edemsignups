@@ -12,6 +12,7 @@ from ..models import Batch, BatchSpreadsheet
 from ..processors.final_processor import getBatches
 from google.appengine.api.datastore_types import Key
 from httplib import BadStatusLine, HTTPException
+from google.appengine.api.urlfetch_errors import DeadlineExceededError
 
 import logging
 
@@ -50,6 +51,9 @@ def tryXTimes(func, times=5):
             return func()
         except BadStatusLine as e:
             logging.error('Caught BadStatusLine on try %s' % i)
+            logging.exception(e)
+        except DeadlineExceededError as e:
+            logging.error('Caught DeadlineExceededError on try %s' % i)
             logging.exception(e)
         except HTTPException as e:
             logging.error('Caught HTTPException on try %s' % i)
