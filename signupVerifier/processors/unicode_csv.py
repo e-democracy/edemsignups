@@ -74,7 +74,8 @@ class UnicodeDictWriter:
         self.__encodeStream__()
 
     def writerow(self, D):
-        self.writer.writerow({k: v.encode("utf-8") for k, v in D.items()})
+        self.writer.writerow({k: v.encode("utf-8") if v else ""
+                              for k, v in D.items()})
         self.__encodeStream__()
 
     def writerows(self, rows):
