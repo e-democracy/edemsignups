@@ -73,6 +73,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         new_spreadsheets = self.gclient.filterOutOldSpreadsheets(spreadsheets)
 
         # 3.) Process the remaining spreadsheets
+        logging.info('%s new spreadsheets to process' % len(new_spreadsheets))
         for new_spreadsheet in new_spreadsheets:
 
             batch = None
