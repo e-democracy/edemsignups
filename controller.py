@@ -371,6 +371,17 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         if self.request.get('after'):
             after = dt.datetime.strptime(self.request.get('after'), timefmt)
 
+        process_optouts = True
+        if self.request.get('process_optouts'):
+            process_optouts = self.request.get('process_optouts') in \
+                                ['true', 'True', '1']
+
+        process_bounces = True
+        if self.request.get('process_bounces'):
+            process_bounces = self.request.get('process_bounces') in \
+                                ['true', 'True', '1']
+
+
         # Follow Up Script
         #   1.) Get BatchSpreadsheets from 46 to 50 hours ago
         #   2.) Get associated Batches
@@ -397,16 +408,21 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             #   4.) Get all Opt-Outs associated with Batches
             #   5.) Get all Bounces associated with Bounces
             removeAllOptOutTokensFromBatches([batch])
-            optouts = batch.optouts.fetch(limit=None)
-            bounces = batch.bounces.fetch(limit=None)
+            if process_optouts:
+                optouts = batch.optouts.fetch(limit=None)
+            if process_bounces:
+                bounces = batch.bounces.fetch(limit=None)
 
             # Update Batch tracking
-            batch.optedout_persons = len(optouts)
-            batch.bounced_persons = len(bounces)
-            batch.put()
+            if process_optouts:
+                batch.optedout_persons = len(optouts)
+            if process_bounces:
+                batch.bounced_persons = len(bounces)
+            if process_optouts or process_bounces:
+                batch.put()
 
             # 6.) For each Batch w/opt-out
-            if optouts:
+            if process_optouts and optouts:
                 # 1.) Clone associated Spreadsheet for Optouts (GClient)
                 ooss, oows = self.gclient.createOptOutSpreadsheet(batch)
                 if not batch.staff_email in staff_followups:
@@ -416,7 +432,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 staff_followups[batch.staff_email]['optouts'].append(
                         (batch, optout_url, optout_title))
             #   7.) For each Batch with Bounce (GClients)
-            if bounces:
+            if process_bounces and bounces:
                 # 1.) Clone associated Spreadsheet for Bounce (GClients)
                 bss, brws = self.gclient.createBouncedSpreadsheet(batch)
                 if not batch.staff_email in staff_followups:
