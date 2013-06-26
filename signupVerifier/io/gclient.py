@@ -11,7 +11,7 @@ from ..settings import settings
 from ..models import Batch, BatchSpreadsheet
 from ..processors.final_processor import getBatches
 from google.appengine.api.datastore_types import Key
-from httplib import BadStatusLine
+from httplib import BadStatusLine, HTTPException
 
 import logging
 
@@ -50,6 +50,9 @@ def tryXTimes(func, times=5):
             return func()
         except BadStatusLine as e:
             logging.error('Caught BadStatusLine on try %s' % i)
+            logging.exception(e)
+        except HTTPException as e:
+            logging.error('Caught HTTPException on try %s' % i)
             logging.exception(e)
 
     logging.info('Final Try')
