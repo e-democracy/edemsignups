@@ -111,7 +111,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                 'staff_email': settings['admin_email_address'],
                                 'event_name': 'ERROR',
                                 'event_date': 'ERROR'
-                            },new_spreadsheet.GetHtmlLink(),
+                            },new_spreadsheet.FindHtmlLink(),
                             new_spreadsheet.title.text)
                 batch_logs.append(batch_log)
                 batch_log['error'] = e
