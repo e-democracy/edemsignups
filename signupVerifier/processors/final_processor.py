@@ -97,7 +97,7 @@ def personsToCsv(persons):
 #    dict_writer = csv.DictWriter(csv_buffer,
 #                    settings['final_csv_column_order'],
 #                    extrasaction='ignore')
-    dict_writer.writeheaders()
+    dict_writer.writeheader()
 #    dict_writer.writeheader()
     for person in persons:
         person = person.asDict()

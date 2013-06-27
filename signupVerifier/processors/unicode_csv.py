@@ -3,6 +3,8 @@
 # Utility class for reading and writing Unicode data in CSVs
 # Copied and modified from the final example at
 # http://docs.python.org/2/library/csv.html#examples
+# Also using code form
+# http://stackoverflow.com/questions/5838605/python-dictwriter-writing-utf-8-encoded-csv-files
 
 import csv
 import codecs
@@ -43,7 +45,7 @@ class UnicodeReader:
 
 class UnicodeDictWriter:
     """
-    A CSV DictW<F8>riter which will write rows to CSV file "f",
+    A CSV DictWriter which will write rows to CSV file "f",
     which is encoded in the given encoding.
     """
 
@@ -67,14 +69,16 @@ class UnicodeDictWriter:
         # empty queue
         self.queue.truncate(0)
 
-    def writeheaders(self):
-        self.writer.writeheaders()
+    def writeheader(self):
+        self.writer.writeheader()
         self.__encodeStream__()
 
-    def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") for s in row])
+    def writerow(self, D):
+        encoded_D = {k: unicode(v).encode("utf-8", errors="ignore") if v else
+                     "" for k, v in D.items()}
+        self.writer.writerow(encoded_D)
         self.__encodeStream__()
 
     def writerows(self, rows):
-        for row in rows:
-            self.writerow(row)
+        for D in rows:
+            self.writerow(D)
