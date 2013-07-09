@@ -6,7 +6,7 @@
     <p>The E-Democracy Signup Verifier has processed the results of signups submitted two days ago.</p>
 
     {% if bounces %}
-    <p>The following batches had email addresses that bounced. For each batch, click the title of the Bounce spreadsheet to view and edit information on bouncers. Once you have finished editing the spreadsheet, go to the Spreadsheets folder and move the Bounce spreadsheet into the Spreadsheets to Process folder.</p>
+    <p>The following batches had email addresses that bounced. For each batch, click the title of the Bounce spreadsheet to view and edit information on bouncers. Once you have finished editing the spreadsheet, go to the Spreadsheets folder and move the Bounce spreadsheet into the Spreadsheets to Process folder. If you do not see any means to correct any errors, move the file to the "Unresolved Bounces" folder.</p>
     <ul>
       {% for batch, download_link, title in bounces %}
         <li><a href="{{ download_link }}">{{ title }}</a></li>
