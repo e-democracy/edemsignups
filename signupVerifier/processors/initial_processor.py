@@ -63,6 +63,10 @@ def addBatchChange(batch, prev_batch):
     prev_batch = Batch.verifyOrGet(prev_batch)
 
     cur_batch = clone_entity(prev_batch, True, True, extra_args=batch)
+    cur_batch.submitted_persons = 0
+    cur_batch.invalid_persons = 0
+    cur_batch.optedout_persons = 0
+    cur_batch.bounced_persons = 0
     cur_batch.put()
 
     change_record = BatchChange(cur_batch=cur_batch, prev_batch=prev_batch)
