@@ -6,7 +6,10 @@
   <p>Results for {{ batch.event_name }} on {{ batch.event_date }} at {{ batch.event_location }} by {{ batch.staff_name}} ({{ batch.staff_email  }}):</p>
   {% if extra %}
     {% if "spreadsheet_title" in extra %}
-  <p>Spreadsheet Title: {{ extra.spreadsheet_title  }}</p>
+  <p>Spreadsheet Title: 
+        {% if "spreadsheet_url" in extra %}<a href="{{extra.spreadsheet_url}}">{% endif %}
+        {{ extra.spreadsheet_title  }}
+        {% if "spreadsheet_url" in extra %}</a>{% endif%}</p>
     {%endif%}
   {% endif %}
   <ul>
