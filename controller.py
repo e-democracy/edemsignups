@@ -15,6 +15,7 @@ from signupVerifier.processors.final_processor import getSuccessfulSignups,\
     personsToCsv, emailCsvs
 from signupVerifier.models import Person
 from signupVerifier.settings import settings
+from django.template.defaultfilters import slugify
 
 import logging
 
@@ -398,7 +399,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         else:
             bss = self.gclient.getBatchSpreadsheets()
 
-        batches = [(bs.batch, {'spreadsheet_title': bs.title}) for bs in bss]
+        batches = [(bs.batch, {'spreadsheet_title': bs.title, 
+                               'spreadsheet_url': bs.url}) for bs in bss]
 
         if not batches:
             logging.info('No Batches to Followup On')
@@ -471,8 +473,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
         #   9.) For each Batch
         #       1.) Make a CSV of successful signups (FinalProcessor)
-        csvs = [("%s - %s.csv" % (batch.event_name, batch.staff_name),
-                personsToCsv(successful_signups))
+        csvs = [("%s.csv" % slugify(batch.spreadsheets.get().title),
+                    personsToCsv(successful_signups))
                 for batch, successful_signups in successes]
 
         #   10.) Email Uploader (FinalProcessor)

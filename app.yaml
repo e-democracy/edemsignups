@@ -4,6 +4,10 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
+libraries:
+- name: django
+  version: latest
+
 inbound_services:
 - mail_bounce
 - mail
