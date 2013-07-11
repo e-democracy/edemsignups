@@ -96,7 +96,8 @@ person_key_map = {
     'parents_born_where': 'parentswhere',
     'num_in_house': 'inhouse',
     'yrly_income': 'yrlyincome',
-    'person_id': 'personid'
+    'person_id': 'personid',
+    'delivery_setting': 'deliverysetting'
 }
 
 
@@ -267,6 +268,10 @@ class GClient(object):
         if 'parents_born_out_of_us' in d and d['parents_born_out_of_us']:
             d['parents_born_out_of_us'] = d['parents_born_out_of_us'].lower() \
                                                                         in yes
+
+        # Set required values
+        if 'delivery_setting' in d and not d['delivery_setting']:
+            d['delivery_setting'] = 'email'
         # Forum column/dict keys - XML does not support tags with just numeric
         # names, and Google semi-randomly assigns XML names in these cases. So
         # we have to make the forum column names strings in the spreadsheet.
