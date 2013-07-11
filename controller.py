@@ -483,6 +483,9 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
             for ss in successful_signups:
                 logging.info('Setting: |%s|%s|' % (ss.delivery_setting,
                     type(ss.delivery_setting)))
+                if not ss.delivery_setting:
+                    ss.delivery_setting = 'email'
+                    ss.put
                 if not ss.delivery_setting in signups_by_delivery:
                     signups_by_delivery[ss.delivery_setting] = []
                 signups_by_delivery[ss.delivery_setting].append(ss)
