@@ -95,7 +95,7 @@ class Person(db.Model):
 
     def delivery_settings_validator(value):
         if value not in ['email', 'digest', 'webonly']:
-            raise ValueError
+            raise ValueError('Delivery Setting incorrect')
 
     created = db.DateTimeProperty(required=True, auto_now_add=True)
     email = db.EmailProperty(required=True)
