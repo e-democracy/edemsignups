@@ -10,7 +10,7 @@ from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id,\
 from signupVerifier.processors.initial_processor import importBatch,\
     importPerson, addBatchChange, addPersonChange, sendVerificationEmails
 from signupVerifier.processors.optout_processor import createOptOutToken,\
-    getPersonByOptOutToken, removeAllOptOutTokensFromBatches
+    removeAllOptOutTokensFromBatches
 from signupVerifier.processors.final_processor import getSuccessfulSignups,\
     personsToCsv, emailCsvs
 from signupVerifier.models import Person
@@ -60,14 +60,14 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
         def new_batch_log(meta_dict, spreadsheet_url, spreadsheet_title):
             return {'meta_dict': meta_dict, 'spreadsheet_url': spreadsheet_url,
-                    'spreadsheet_title': spreadsheet_title, 'error': None, 
-                    'persons_success': [], 'persons_fail': [], 
+                    'spreadsheet_title': spreadsheet_title, 'error': None,
+                    'persons_success': [], 'persons_fail': [],
                     'errors_sheet_url': None, 'errors_sheet_title': None}
 
         # 1.) Get list of all spreadsheets in folder
         signups_folder = tryXTimes(
-                            lambda: self.gclient.docsClient.GetResourceById(
-                                settings['signups_folder_id']))
+            lambda: self.gclient.docsClient.GetResourceById(
+                settings['signups_folder_id']))
         spreadsheets = self.gclient.spreadsheets(signups_folder)
 
         # 2.) Discard from that list all spreadsheets already processed
@@ -86,18 +86,18 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                 if not meta_list_feed:
                     raise LookupError('Coversheet contains no data')
                 meta_dict = self.gclient.metaRowToDict(meta_list_feed[0])
- 
+
                 # 2.) Import meta_dict into Batch table
                 if 'prev_batch' in meta_dict:
                     batch = addBatchChange(meta_dict, meta_dict['prev_batch'])
                     meta_dict = batch.asDict()
                     batchSpreadsheet = self.gclient.importBatchSpreadsheet(
-                                        batch, new_spreadsheet)
+                        batch, new_spreadsheet)
                 else:
                     batch = importBatch(meta_dict)
 
                     batchSpreadsheet = self.gclient.importBatchSpreadsheet(
-                                        batch, new_spreadsheet)
+                        batch, new_spreadsheet)
             except Exception as e:
                 # Something serious has happened. Need to piece together a
                 # batch_log for the tech guy and undo any changes to the DB
@@ -108,20 +108,20 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
                 logging.exception(e)
                 batch_log = new_batch_log(
-                            {
-                                'staff_email': settings['admin_email_address'],
-                                'event_name': 'ERROR',
-                                'event_date': 'ERROR'
-                            },new_spreadsheet.FindHtmlLink(),
-                            new_spreadsheet.title.text)
+                    {
+                        'staff_email': settings['admin_email_address'],
+                        'event_name': 'ERROR',
+                        'event_date': 'ERROR'
+                    }, new_spreadsheet.FindHtmlLink(),
+                    new_spreadsheet.title.text)
                 batch_logs.append(batch_log)
                 batch_log['error'] = e
                 continue
 
             # Create a batch log for the new batch
             batch_log = new_batch_log(meta_dict,
-                            new_spreadsheet.FindHtmlLink(),
-                            new_spreadsheet.title.text)
+                                      new_spreadsheet.FindHtmlLink(),
+                                      new_spreadsheet.title.text)
             batch_logs.append(batch_log)
 
             # 3.) Convert and import persons and create OptOutTokens
@@ -161,15 +161,17 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
                 # Make sure we have some level of valid data
                 validation_errors = self.gclient.invalidPersonRow(
-                                        person_list_entry)
+                    person_list_entry)
                 if validation_errors:
                     batch.invalid_persons += 1
                     # Need to patch together a dict on an error.
                     # Blug, this is ugly
                     errors_str = '; '.join(validation_errors)
                     batch_log['persons_fail'].append((
-                        {'email': person_list_entry.get_value('email'),
-                         'full_name': person_list_entry.get_value('fullname')
+                        {
+                            'email': person_list_entry.get_value('email'),
+                            'full_name': person_list_entry
+                            .get_value('fullname')
                         }, errors_str))
 
                     # TODO Add the row to a spreadsheet for validation errors,
@@ -180,13 +182,14 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                                 batch)
                         vgsid = spreadsheet_id(validations_spreadsheet)
                         vwsid = worksheet_id(validations_worksheet)
-                        validations_listfeed = tryXTimes( lambda: \
-                                self.gclient.spreadsheetsClient.GetListFeed(
-                                    vgsid, vwsid).entry)
+                        validations_listfeed = tryXTimes(
+                            lambda:
+                            self.gclient.spreadsheetsClient.GetListFeed(
+                                vgsid, vwsid).entry)
                         batch_log['errors_sheet_url'] =\
-                                validations_spreadsheet.FindHtmlLink()
+                            validations_spreadsheet.FindHtmlLink()
                         batch_log['errors_sheet_title'] =\
-                                validations_spreadsheet.title.text
+                            validations_spreadsheet.title.text
 
                     logging.debug('Accessing row # %s' % error_i)
                     error_entry = validations_listfeed[error_i]
@@ -194,15 +197,16 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
                     error_entry.from_dict(person_list_entry.to_dict())
                     error_entry.set_value('errors', errors_str)
                     tryXTimes(lambda: self.gclient.spreadsheetsClient.Update(
-                            error_entry, force=True))
+                        error_entry, force=True))
                     continue
 
                 person_dict = self.gclient.personRowToDict(person_list_entry)
                 try:
                     if 'person_id' in person_dict:
                         person_dict['source_batch'] = batch.key()
-                        person = addPersonChange(person_dict,
-                                    person_dict['person_id'])
+                        person = addPersonChange(
+                            person_dict,
+                            person_dict['person_id'])
                     else:
                         person = importPerson(person_dict, batch)
 
@@ -215,8 +219,8 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             # 4.) Generate and send Emails!
             optout_base_url = '/'.join([self.request.host_url, 'optout'])
-            batch_log = sendVerificationEmails(batch, persons, optout_tokens,
-                            optout_base_url, batch_log)
+            batch_log = sendVerificationEmails(
+                batch, persons, optout_tokens, optout_base_url, batch_log)
 
             # Save the model with updated tracking
             batch.put()
@@ -233,22 +237,22 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
 
             if not staff_email in staff_templates:
                 staff_templates[staff_email] = \
-                        {
-                            'failed_batches': [],
-                            'successful_batches': []
-                        }
+                    {
+                        'failed_batches': [],
+                        'successful_batches': []
+                    }
 
             template_values = staff_templates[staff_email]
 
             if batch_log['error']:
                 template_values['failed_batches'].append(
-                        {
-                            'spreadsheet_url': batch_log['spreadsheet_url'],
-                            'spreadsheet_title': batch_log['spreadsheet_title'],
-                            'event_name': batch_log['meta_dict']['event_name'],
-                            'event_date': batch_log['meta_dict']['event_date'],
-                            'error': batch_log['error']
-                        })
+                    {
+                        'spreadsheet_url': batch_log['spreadsheet_url'],
+                        'spreadsheet_title': batch_log['spreadsheet_title'],
+                        'event_name': batch_log['meta_dict']['event_name'],
+                        'event_date': batch_log['meta_dict']['event_date'],
+                        'error': batch_log['error']
+                    })
             else:
                 successful_batch = \
                     {
@@ -288,11 +292,10 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
         for email, template_values in staff_templates.iteritems():
             email_html = template.render(initial_template, template_values)
             email_text = template.render(
-                            initial_template_text,
-                            template_values)
+                initial_template_text, template_values)
             message = mail.EmailMessage(
-                        sender=settings['app_email_address'],
-                        subject=settings['subject_initial_staff'])
+                sender=settings['app_email_address'],
+                subject=settings['subject_initial_staff'])
             message.to = email
             message.cc = settings['signups_email_address']
             message.html = email_html
@@ -356,6 +359,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
     def get(self):
         logging.info('Running Followup')
+
         # Used to organize what to send to who
         def new_followup_struct():
             return {'optouts': [],
@@ -375,12 +379,12 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         process_optouts = True
         if self.request.get('process_optouts'):
             process_optouts = self.request.get('process_optouts') in \
-                                ['true', 'True', '1']
+                ['true', 'True', '1']
 
         process_bounces = True
         if self.request.get('process_bounces'):
             process_bounces = self.request.get('process_bounces') in \
-                                ['true', 'True', '1']
+                ['true', 'True', '1']
 
         if not process_optouts:
             logging.info('Not processing optouts')
@@ -399,7 +403,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         else:
             bss = self.gclient.getBatchSpreadsheets()
 
-        batches = [(bs.batch, {'spreadsheet_title': bs.title, 
+        batches = [(bs.batch, {'spreadsheet_title': bs.title,
                                'spreadsheet_url': bs.url}) for bs in bss]
 
         if not batches:
@@ -436,7 +440,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 optout_url = ooss.FindHtmlLink()
                 optout_title = ooss.title.text
                 staff_followups[batch.staff_email]['optouts'].append(
-                        (batch, optout_url, optout_title))
+                    (batch, optout_url, optout_title))
             #   7.) For each Batch with Bounce (GClients)
             if process_bounces and bounces:
                 # 1.) Clone associated Spreadsheet for Bounce (GClients)
@@ -446,7 +450,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 bounce_url = bss.FindHtmlLink()
                 bounce_title = bss.title.text
                 staff_followups[batch.staff_email]['bounces'].append(
-                        (batch, bounce_url, bounce_title))
+                    (batch, bounce_url, bounce_title))
 
             successful_signups = getSuccessfulSignups(batch)
             successes.append((batch, successful_signups))
@@ -459,8 +463,8 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 email_html = template.render(followup_template, followup)
                 email_text = template.render(followup_template_text, followup)
                 message = mail.EmailMessage(
-                            sender=settings['app_email_address'],
-                            subject=settings['subject_followup_staff'])
+                    sender=settings['app_email_address'],
+                    subject=settings['subject_followup_staff'])
                 message.to = staff_address
                 message.cc = settings['signups_email_address']
                 message.html = email_html
@@ -471,11 +475,19 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
 
                 retval += email_html
 
-        #   9.) For each Batch
-        #       1.) Make a CSV of successful signups (FinalProcessor)
-        csvs = [("%s.csv" % slugify(batch.spreadsheets.get().title),
-                    personsToCsv(successful_signups))
-                for batch, successful_signups in successes]
+        #   Make CSVs for successful signups
+        csvs = []
+        for batch, successful_signups in successes:
+            email_csv, digest_csv, web_csv = personsToCsv(successful_signups)
+            csvs.append(("%s-emails.csv" %
+                         slugify(batch.spreadsheets.get().title),
+                         email_csv))
+            csvs.append(("%s-digests.csv" %
+                         slugify(batch.spreadsheets.get().title),
+                         digest_csv))
+            csvs.append(("%s-webonly.csv" %
+                         slugify(batch.spreadsheets.get().title),
+                         web_csv))
 
         #   10.) Email Uploader (FinalProcessor)
         emailCsvs(csvs, batches)
@@ -485,10 +497,10 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(retval)
 
-routes =  [
-            ('/spreadsheet_initial', SpreadsheetInitialPage),
-            ('/test_bounce', TestBouncePage),
-            ('/spreadsheet_followup', SpreadsheetFollowupPage)
-          ]
+routes = [
+    ('/spreadsheet_initial', SpreadsheetInitialPage),
+    ('/test_bounce', TestBouncePage),
+    ('/spreadsheet_followup', SpreadsheetFollowupPage)
+]
 
-app = webapp2.WSGIApplication(routes = routes, debug = True)
+app = webapp2.WSGIApplication(routes=routes, debug=True)
