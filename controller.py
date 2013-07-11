@@ -478,16 +478,20 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
         #   Make CSVs for successful signups
         csvs = []
         for batch, successful_signups in successes:
-            email_csv, digest_csv, web_csv = personsToCsv(successful_signups)
-            csvs.append(("%s-emails.csv" %
-                         slugify(batch.spreadsheets.get().title),
-                         email_csv))
-            csvs.append(("%s-digests.csv" %
-                         slugify(batch.spreadsheets.get().title),
-                         digest_csv))
-            csvs.append(("%s-webonly.csv" %
-                         slugify(batch.spreadsheets.get().title),
-                         web_csv))
+            signups_by_delivery = (
+                ('email', [signup for signup in successful_signups if
+                 signup.delivery_setting == 'email']),
+                ('digest', [signup for signup in successful_signups if
+                 signup.delivery_setting == 'digest']),
+                ('webonly', [signup for signup in successful_signups if
+                 signup.delivery_setting == 'webonly'])
+            )
+            for delivery_setting, signups in signups_by_delivery:
+                if signups:
+                    csvs.append(("%s-%s.csv" %
+                                 (slugify(batch.spreadsheets.get().title),
+                                  delivery_setting),
+                                 personsToCsv(signups)))
 
         #   10.) Email Uploader (FinalProcessor)
         emailCsvs(csvs, batches)
