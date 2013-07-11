@@ -94,11 +94,7 @@ def personsToCsv(persons):
     dict_writer = UnicodeDictWriter(csv_buffer,
                                     settings['final_csv_column_order'],
                                     extrasaction='ignore')
-#    dict_writer = csv.DictWriter(csv_buffer,
-#                    settings['final_csv_column_order'],
-#                    extrasaction='ignore')
     dict_writer.writeheader()
-#    dict_writer.writeheader()
     for person in persons:
         person = person.asDict()
         forums = person['forums']
