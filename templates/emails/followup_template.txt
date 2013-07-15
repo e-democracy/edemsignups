@@ -10,7 +10,7 @@ The E-Democracy Signup Verifier has processed the results of signups submitted t
 *Tips for fixing bounces*
 A bounce is usually caused by a misspelled email address. If you still have access to the paper signup sheet, make sure that the email address found in the spreadsheet matches the email address written on the signup sheet.
 {% endif %}
-{% if optouts %}The following batches had email addresses that opted out of signuping up. For each batch, click the link next to the title of the Opt Out spreadsheet to view and edit information about those who opted out. Once you have finished editing the spreadsheet, go to the Spreadsheets folder and move the Opt Out spreadsheet into the Spreadsheets to Process folder.
+{% if optouts %}The following batches had email addresses that opted out of signing up. For each batch, click the link next to the title of the Opt Out spreadsheet to view and edit information about those who opted out. Once you have finished editing the spreadsheet, go to the Spreadsheets folder and move the Opt Out spreadsheet into the Spreadsheets to Process folder.
 {% for batch, download_link, title in optouts %}
  - {{ title }} - {{ download_link }}{% endfor %}
 
