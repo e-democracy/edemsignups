@@ -49,7 +49,7 @@ class UnicodeDictReader(UnicodeReader):
     """
 
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
-        f = UTF8Recorder(f, encoding)
+        f = UTF8Recoder(f, encoding)
         self.reader = csv.DictReader(f, dialect=dialect, **kwds)
 
     @property
