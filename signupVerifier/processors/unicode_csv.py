@@ -52,6 +52,11 @@ class UnicodeDictReader(UnicodeReader):
         f = UTF8Recoder(f, encoding)
         self.reader = csv.DictReader(f, dialect=dialect, **kwds)
 
+    def next(self):
+        row = self.reader.next()
+        return {key: unicode(value, "utf-8") for (key, value) in
+                row.iteritems()}
+
     @property
     def fieldnames(self):
         return self.reader.fieldnames
