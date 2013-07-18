@@ -142,7 +142,8 @@ def emailCsvs(csvs, batches, email_template=csvs_ready_template):
     message.to = settings['admin_email_address']
     message.cc = settings['signups_email_address']
     message.html = email_html
-    message.attachments = csvs
+    if csvs:
+        message.attachments = csvs
     message.send()
 
     return True
