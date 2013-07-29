@@ -6,6 +6,7 @@ from google.appengine.api import mail
 from ..settings import settings
 from ..models import Batch, BatchChange, Person, PersonChange
 from ..models.utils import clone_entity
+from ..io.utils import tryXTimes
 
 
 verification_email_template = \
@@ -229,7 +230,7 @@ def sendVerificationEmails(batch, persons=None, optout_tokens=None,
             message.reply_to = settings['optout_email_address']
             message.html = email_html
             message.body = email_text
-            message.send()
+            tryXTimes(lambda: message.send())
 
             if batch_log:
                 batch_log['persons_success'].append(person)

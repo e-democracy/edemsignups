@@ -5,8 +5,8 @@ import webapp2
 from urllib import urlencode
 from google.appengine.ext.webapp import template
 from google.appengine.api import mail
-from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id,\
-    tryXTimes
+from signupVerifier.io.gclient import GClient, spreadsheet_id, worksheet_id
+from signupVerifier.io.utils import tryXTimes
 from signupVerifier.processors.initial_processor import importBatch,\
     importPerson, addBatchChange, addPersonChange, sendVerificationEmails
 from signupVerifier.processors.optout_processor import createOptOutToken,\
@@ -300,7 +300,7 @@ class SpreadsheetInitialPage(webapp2.RequestHandler):
             message.cc = settings['signups_email_address']
             message.html = email_html
             message.body = email_text
-            message.send()
+            tryXTimes(lambda: message.send())
 
             logging.info('Emailed %s' % email)
 
@@ -469,7 +469,7 @@ class SpreadsheetFollowupPage(webapp2.RequestHandler):
                 message.cc = settings['signups_email_address']
                 message.html = email_html
                 message.body = email_text
-                message.send()
+                tryXTimes(lambda: message.send())
 
                 logging.info('Emailed %s' % staff_address)
 

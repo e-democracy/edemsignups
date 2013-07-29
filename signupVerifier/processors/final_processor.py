@@ -6,6 +6,7 @@ from google.appengine.api import mail
 
 from StringIO import StringIO
 from ..models import Batch
+from ..io.utils import tryXTimes
 from ..settings import settings
 
 from unicode_csv import UnicodeDictWriter
@@ -144,6 +145,6 @@ def emailCsvs(csvs, batches, email_template=csvs_ready_template):
     message.html = email_html
     if csvs:
         message.attachments = csvs
-    message.send()
+    tryXTimes(lambda: message.send())
 
     return True
