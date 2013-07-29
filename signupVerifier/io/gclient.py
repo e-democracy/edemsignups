@@ -232,7 +232,7 @@ class GClient(object):
                     d[dict_key] = d[dict_key].strip()
 
 
-        if 'event_date' in d:
+        if 'event_date' in d and d['event_date'] not None:
             d['event_date'] = dt.datetime.strptime(d['event_date'],
                             "%m/%d/%Y").date()
 
