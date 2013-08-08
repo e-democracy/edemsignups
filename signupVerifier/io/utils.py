@@ -1,4 +1,5 @@
 # coding=utf-8
+import socket.error
 from httplib import BadStatusLine, HTTPException
 from google.appengine.api.urlfetch_errors import DeadlineExceededError
 import logging
@@ -21,6 +22,9 @@ def tryXTimes(func, times=5):
             logging.exception(e)
         except HTTPException as e:
             logging.error('Caught HTTPException on try %s' % i)
+            logging.exception(e)
+        except socket.error as e:
+            logging.error('Caught socket.error on try %s' % i)
             logging.exception(e)
 
     logging.info('Final Try')
