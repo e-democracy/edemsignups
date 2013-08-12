@@ -21,6 +21,10 @@ handlers:
   script: optout_handler.app
   login: admin
 
+- url: /export_demographics.csv
+  script: export_demographics_page.app
+  login: admin
+
 - url: /optout
   script: optout_page.app
 
