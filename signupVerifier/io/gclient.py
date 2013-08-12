@@ -765,7 +765,7 @@ class GClient(object):
         # Validate email address
         if not r.get_value('email') or not r.get_value('email').strip():
             retval.append('Missing email address')
-        elif not re.match(r"[^@]+@[^@]+\.[^@]+", r.get_value('email')):
+        elif not re.match(r"[^@;]+@[^@]+\.[^@;]+", r.get_value('email')):
             retval.append('Malformed email address')
         # Validate first, last, and full names
         if (not r.get_value('firstname') or
