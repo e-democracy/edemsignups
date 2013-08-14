@@ -8,6 +8,9 @@ The E-Democracy Signup Verifier has processed the results of signups submitted t
  - {{ title }} - {{ download_link }}{% endfor %}
 
 *Tips for fixing bounces*
+
+Information about the bounce is reported in Column AH. Scroll to the right and make this column wider to make the spreadsheet easier to use.
+
 A bounce is usually caused by a misspelled email address. If you still have access to the paper signup sheet, make sure that the email address found in the spreadsheet matches the email address written on the signup sheet.
 {% endif %}
 {% if optouts %}The following batches had email addresses that opted out of signing up. For each batch, click the link next to the title of the Opt Out spreadsheet to view and edit information about those who opted out. Once you have finished editing the spreadsheet, go to the Spreadsheets folder and move the Opt Out spreadsheet into the Spreadsheets to Process folder.
@@ -15,7 +18,11 @@ A bounce is usually caused by a misspelled email address. If you still have acce
  - {{ title }} - {{ download_link }}{% endfor %}
 
 *Tips for dealing with Opt Outs*
+
+Information about the opt out is reported in Column AH. Scroll to the right and make this column wider to make the spreadsheet easier to use.
+
 For each Opt Out spreadsheet, click the title of the spreadsheet to view and edit information about those who opted out. The opt out spreadsheet will include that reason the person gave for opting out of joining E-Democracy.org
+
 If the reason for opting out is that the person is out of their office or on vacation, then move the row for that person into a spreadsheet that you will submit at a later time (ideally, the out of office message will tell you when the person will be back in their office.)
 If the reason for opting out is that the person meant to signup somebody else instead, then change the row for that person based on the information that person provides.
 If the person simply does not wish to join E-Democracy.org, record the names of those you want to follow up with or refer to another team member and delete the row for that person from the spreadsheet. 
