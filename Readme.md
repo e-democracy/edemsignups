@@ -3,6 +3,17 @@
 Provides a number of scrips that run on a Google App Engine instance and 
 automate parts of the outreach sign up process.
 
+## Pages ##
+
+###spreadsheet_follow###
+
+####Parameters####
+
+* before: Optional. If set, in the format YYYY-MM-DD-HH-MM-SS, the page will only process batches created before the provided date-time. Also accepts the special value 'now', which represents the date-time at the moment of the page request. Default value is 46 hours in the past.
+* after: Optional. If set, in the format YYYY-MM-DD-HH-MM-SS, the page will only process batches created after the provided date-time. Default value is 50 hours in the past.
+* process_optouts: Optional. A boolean value. If True/true/1, the page will check for optouts in any found batches, create spreadsheets that refer to those optouts, and will notify the submitter of the batch of the optouts. If not True/true/1, none of these actions will take place. Default value is True.
+* process_bounces: Optional. A boolean vlaue. If True/true/1, the page will check for bounces in any found batches, create spreadsheets that refer to those bounces, and will notify the submitter of the batch of the bounce. If not True/true/1, none of these actions will take place. Default value is True.
+
 ## Tools ##
 
 ### Google Spreadsheets API ###
