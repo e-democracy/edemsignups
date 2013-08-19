@@ -13,6 +13,8 @@ from utils import tryXTimes
 
 import logging
 
+EMAIL_REGEX = r"[^@;]+@[^@]+\.[^@;]+"
+
 
 def spreadsheet_id(spreadsheet):
     """
@@ -205,6 +207,10 @@ class GClient(object):
                 del d[row_key]
                 if isinstance(d[dict_key], basestring):
                     d[dict_key] = d[dict_key].strip()
+
+        # Validate the sheet
+        if not re.match(EMAIL_REGEX, d['staff_email']):
+            raise ValueError('Malformed email address')
 
         if 'event_date' in d and d['event_date'] is not None:
             d['event_date'] = dt.datetime.strptime(d['event_date'],
@@ -765,7 +771,7 @@ class GClient(object):
         # Validate email address
         if not r.get_value('email') or not r.get_value('email').strip():
             retval.append('Missing email address')
-        elif not re.match(r"[^@;]+@[^@]+\.[^@;]+", r.get_value('email')):
+        elif not re.match(EMAIL_REGEX, r.get_value('email')):
             retval.append('Malformed email address')
         # Validate first, last, and full names
         if (not r.get_value('firstname') or
