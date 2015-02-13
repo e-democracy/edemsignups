@@ -3,6 +3,17 @@
 Provides a number of scrips that run on a Google App Engine instance and 
 automate parts of the outreach sign up process.
 
+## 2015 Spreadsheet Changes ##
+
+In early 2015, Google made changes to Drive. Among these changes were re-Iding
+spreadsheets - some spreadsheets have had their ID changed. This breaks the
+check against history that the Signup Processor does when evaluating 
+spreadsheets, as an already processed spreadsheet may now have an entirely new
+ID that the processor is unaware of.
+
+For the time being, E-Democracy's instance of the Signup Processor will be 
+disabled due to this issue.
+
 ## Pages ##
 
 ###spreadsheet_followup###
